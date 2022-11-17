@@ -1,0 +1,23 @@
+------------------------------------------------------------------------
+r286 | Burstroc | 2021-02-12 10:56:56 +0000 (Fri, 12 Feb 2021) | 1 line
+Changed paths:
+   M /trunk/BankItems.lua
+
+Update: Minor adjustment to default settings for new sorting options.
+------------------------------------------------------------------------
+r285 | Burstroc | 2021-02-12 10:33:15 +0000 (Fri, 12 Feb 2021) | 9 lines
+Changed paths:
+   M /trunk/BankItems.lua
+   M /trunk/BankItems.toc
+
+TOC updated for addon version 9.0.2.3
+Ticket #101: Fixed search result window being limited to contents of the first bag for currencies.
+Ticket #103: Added protections for tooltip hooks receiving nil item links.
+Updated: Added Dalaran Hearthstone to the ignore list for tooltip count display.
+Fixed: Added workaround for closing windows during combat.
+Updated: Added sorting to the money tooltip on the main BankItems frame. Added option to control the sorting for sorting order and limit the # of entries shown. Entry limit can be temporarily toggled on/off by clicking.
+Updated: Added options to control the sorting order of the LDB plugin tooltip and limit the # of entries shown. Entry limit can be temporarily overridden by holding down Alt.
+Updated: Adjusted options screen to make room for new options and make adding new options easier.
+Updated: Added new localization entries related to new options.
+------------------------------------------------------------------------
+

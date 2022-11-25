@@ -4881,7 +4881,7 @@ function BankItems_PopulateBag(bagID)
 end
 
 -- Prehook SetItemSearch
-local Orig_SetItemSearch = SetItemSearch
+local Orig_SetItemSearch = C_Container.SetItemSearch
 function SetItemSearch(text, ...)
 	filterSearchText = strlower(text)
 	return Orig_SetItemSearch(text, ...)
@@ -8241,7 +8241,7 @@ function BankItems_Options_Init(self, event)
 	else
 		UIDropDownMenu_DisableDropDown(BankItems_GTTDropDown)
 		--BlizzardOptionsPanel_CheckButton_Disable(BankItems_OptionsFrame_TTSoulbound)
-		BlizzardOptionsPanel_CheckButton_Disable(BankItems_OptionsFrame_TTUnique)
+		BankItems_OptionsFrame_TTUnique:Disable()
 	end
 
 	self:UnregisterEvent("VARIABLES_LOADED")

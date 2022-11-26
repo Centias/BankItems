@@ -7,4 +7,4 @@ I intend to take no credit for the work they did or take any money out of their 
 
 If you really want to send me a couple bucks for my work, that is entirely up to you.
 
-[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&business=XTFVYNFC5S4CW)
+[![Donate](https://img.shields.io/badge/Donate-PayPal-green.svg)](https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=XTFVYNFC5S4CW)

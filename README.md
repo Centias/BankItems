@@ -7,4 +7,3 @@ I intend to take no credit for the work they did or take any money out of their 
 
 If you really want to send me a couple bucks for my work, that is entirely up to you.
 
-[![paypal](https://www.paypalobjects.com/en_US/i/btn/btn_donateCC_LG.gif)](XTFVYNFC5S4CW)

@@ -5738,7 +5738,7 @@ function BankItems_Search(searchText)
 										data[itemName] = data[itemName] or newTable()
 										data[itemName][key] = data[itemName][key] or newTable()
 										data[itemName][key].count = (data[itemName][key].count or 0) + (theBag[bagItem].count or 1)
-										if bagNum >= 0 and bagNum <= 4 then
+										if bagNum >= BACKPACK_CONTAINER and bagNum <= NUM_TOTAL_EQUIPPED_BAG_SLOTS then
 											data[itemName][key].inv = (data[itemName][key].inv or 0) + (theBag[bagItem].count or 1)
 										elseif bagNum == 100 then
 											data[itemName][key].equipped = (data[itemName][key].equipped or 0) + (theBag[bagItem].count or 1)
@@ -6370,7 +6370,7 @@ function BankItems_Generate_ItemCache()
 									data[uniqueItem][key] = data[uniqueItem][key] or newTable()
 									data[uniqueItem][key].count = (data[uniqueItem][key].count or 0) + (theBag[bagItem].count or 1)
 								end
-								if bagNum >= 0 and bagNum <= 4 then
+								if bagNum >= BACKPACK_CONTAINER and bagNum <= NUM_TOTAL_EQUIPPED_BAG_SLOTS then
 									data[temp][key].inv = (data[temp][key].inv or 0) + (theBag[bagItem].count or 1)
 									if uniqueItem then data[uniqueItem][key].inv = (data[uniqueItem][key].inv or 0) + (theBag[bagItem].count or 1) end
 								elseif bagNum == 100 then
@@ -6464,7 +6464,7 @@ function BankItems_Generate_SelfItemCache()
 							data[uniqueItem] = data[uniqueItem] or newTable()
 							data[uniqueItem].count = (data[uniqueItem].count or 0) + (theBag[bagItem].count or 1)
 						end
-						if bagNum >= 0 and bagNum <= 4 then
+						if bagNum >= BACKPACK_CONTAINER and bagNum <= NUM_TOTAL_EQUIPPED_BAG_SLOTS then
 							data[temp].inv = (data[temp].inv or 0) + (theBag[bagItem].count or 1)
 							if uniqueItem then data[uniqueItem].inv = (data[uniqueItem].inv or 0) + (theBag[bagItem].count or 1) end
 						elseif bagNum == 100 then

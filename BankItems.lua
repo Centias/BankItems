@@ -5889,7 +5889,7 @@ function BankItems_Search(searchText)
 					local theBag = bankPlayer[format("Bag%d", bagNum)]
 					if searchFilter[bagNum] and theBag then
 						local realSize = theBag.size or 0
-						if bagNum == 101  then
+						if bagNum == 101 or bagNum == 102 then
 							realSize = #theBag
 						elseif bagNum == 104 or bagNum == 105 then
 							realSize = theBag.realSize or #theBag
@@ -6350,7 +6350,7 @@ function BankItems_Generate_ItemCache()
 				local theBag = bankPlayer[format("Bag%d", bagNum)]
 				if theBag then
 					local realSize = theBag.size or 0
-					if bagNum == 101 or bagNum == 103 then
+					if bagNum == 101 or bagNum == 102 or bagNum == 103 then
 						realSize = #theBag
 					elseif bagNum == 104 or bagNum == 105 then
 						realSize = theBag.realSize or #theBag
@@ -6438,7 +6438,7 @@ function BankItems_Generate_SelfItemCache()
 		local theBag = bankPlayer[format("Bag%d", bagNum)]
 		if theBag then
 			local realSize = theBag.size or 0
-			if bagNum == 101 or bagNum == 103 then
+			if bagNum == 101 or bagNum == 102 or bagNum == 103 then
 				realSize = #theBag
 			elseif bagNum == 104 or bagNum == 105 then
 				realSize = theBag.realSize or #theBag

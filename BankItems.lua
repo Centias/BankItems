@@ -986,8 +986,15 @@ function BankItems_Frame_OnEvent(self, event, ...)
 			BankItems_UpdateFrame:SetScript("OnUpdate", BankItems_UpdateFrame_OnUpdate)
 		end
 	elseif event == "PLAYERREAGENTBANKSLOTS_CHANGED" or event == "REAGENTBANK_UPDATE" then --watch for reagent bank updates
-		bagsToUpdate.rbank = true --bank doesn't need to be open to read reagent bank contents
-		BankItems_UpdateFrame:SetScript("OnUpdate", BankItems_UpdateFrame_OnUpdate)
+		if not isBankOpen then
+			if arg1 then
+				bankSlotsToUpdate[#bankSlotsToUpdate + 1] = tonumber(arg1) + 100 -- add 100 to offset reagent bank items
+				BankItems_UpdateFrame:SetScript("OnUpdate", BankItems_UpdateFrame_OnUpdate)
+			end
+		elseif arg1 and arg1 <= NUM_REAGENTBANKGENERIC_SLOTS then
+			bagsToUpdate.rbank = true 
+			BankItems_UpdateFrame:SetScript("OnUpdate", BankItems_UpdateFrame_OnUpdate)
+		end	
 	elseif event == "BANKFRAME_OPENED" then
 		isBankOpen = true
 		dontUpdateClosedBank = false
@@ -1132,9 +1139,9 @@ function BankItems_UpdateFrame_OnUpdate(self, elapsed)
 	
 	--keep after reagent bank and other inventory locations
 	if #bankSlotsToUpdate > 0 then
-		if not bagsToUpdate.rbank then --update reagent bank first if it hasn't already been updated this frame
-			BankItems_SaveReagentBank()
-		end
+		-- if not bagsToUpdate.rbank then --update reagent bank first if it hasn't already been updated this frame
+			-- BankItems_SaveReagentBank()
+		-- end
 		--catch errors in UpdateClosedBankCounts so we don't spam OnUpdate after an error
 		local success, errormsg = pcall(UpdateClosedBankCounts, bankSlotsToUpdate)
 		if not success then
@@ -4310,6 +4317,7 @@ function bankStackReduction(tab, reduction)
 			if sortTab[i] == tab[j] then
 				sortTab[i] = tab[j] - reduction
 				if sortTab[i] < 0 then
+					print(i, j, reduction)
 					reduction = reduction - tab[j]
 					tab[j] = 0
 				else
@@ -4336,6 +4344,12 @@ function UpdateClosedBankCounts(slot) --update counts that may have changed from
 				temp = tonumber(strmatch(selfPlayer[slot[i]].link, "item:(%d+)"))
 				if temp then data[temp] = data[temp] or newTable() end
 			end
+		elseif slot[i] > 100 then -- reagent bank changed
+			theBag = selfPlayer.Bag105
+			if theBag[slot[i]-100] and theBag[slot[i]-100].link then
+				temp = tonumber(strmatch(theBag[slot[i]-100].link, "item:(%d+)"))
+				if temp then data[temp] = data[temp] or newTable() end
+			end
 		else --an equipped bank bag changed
 			theBag = selfPlayer[format("Bag%d", slot[i] - 24)]
 			if theBag and theBag.size then
@@ -4359,6 +4373,8 @@ function UpdateClosedBankCounts(slot) --update counts that may have changed from
 					if temp and data[temp] then
 						BankItems_Cache_ItemName(temp, theBag[bagItem].link)
 						data[temp].reagentbank = (data[temp].reagentbank or 0) + (theBag[bagItem].count or 1)
+						data[temp].bankCounts = data[temp].bankCounts or newTable()
+						data[temp].bankCounts[#data[temp].bankCounts+1] = (theBag[bagItem].count or 1)
 					end
 				end
 			end
@@ -4401,8 +4417,8 @@ function UpdateClosedBankCounts(slot) --update counts that may have changed from
 	--find the bank item(s) that changed and record the total difference in count
 	local itemCount, totalBankCount, bankDiff = 0, 0 , 0
 	for k,v in pairs(data) do
-		totalBankCount = GetItemCount(k, true) - GetItemCount(k) - (data[k].reagentbank or 0) - (data[k].bankbags or 0) --GetItemCount(k, true) includes banks and GetItemCount(k) excludes banks
-		bankDiff = data[k].bank - totalBankCount
+		totalBankCount = GetItemCount(k, true) - GetItemCount(k) - (data[k].bankbags or 0) --GetItemCount(k, true) includes banks and GetItemCount(k) excludes banks  -- (data[k].reagentbank or 0)
+		bankDiff = (data[k].bank or data[k].reagentbank or 0) - totalBankCount
 		if bankDiff > 0 then
 			itemCount = itemCount + 1
 			if itemCount > #slot then
@@ -4460,6 +4476,28 @@ function UpdateClosedBankCounts(slot) --update counts that may have changed from
 								end
 								targetItems[k] = targetItems[k] + 1
 							end
+						end
+					end
+				end
+			end
+		end
+	end
+	
+	theBag = selfPlayer.Bag105
+	if theBag then
+		for num = 1, NUM_REAGENTBANKGENERIC_SLOTS do --adjust reagent bank items
+			if theBag[num] and theBag[num].link then
+				temp = tonumber(strmatch(theBag[num].link, "item:(%d+)"))
+				if temp then
+					for k,v in pairs(targetItems) do
+						if temp == k then
+							theBag[num].count = data[k].bankCounts[targetItems[k]]
+							if theBag[num].count > 0 then
+								if theBag[num].count == 1 then theBag[num].count = nil end
+							else
+								theBag[num] = delTable(theBag[num]) --this stack of the item should be gone
+							end
+							targetItems[k] = targetItems[k] + 1
 						end
 					end
 				end

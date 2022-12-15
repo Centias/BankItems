@@ -4920,7 +4920,7 @@ end
 
 -- Prehook SetItemSearch
 local Orig_SetItemSearch = C_Container.SetItemSearch
-function SetItemSearch(text, ...)
+function C_Container.SetItemSearch(text, ...)
 	filterSearchText = strlower(text)
 	return Orig_SetItemSearch(text, ...)
 end

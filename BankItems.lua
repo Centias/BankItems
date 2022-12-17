@@ -3985,19 +3985,20 @@ function BankItems_SaveInvItems(bagID)
 	end
 
 	selfPlayer.Bag100 = selfPlayer.Bag100 or newTable()
-	selfPlayer.Bag100.size = selfPlayer.Bag100.size or 18 --moved so bag data always has a size after being created - keeping outside if statement for older data without a size
+	selfPlayer.Bag100.size = selfPlayer.Bag100.size or 28 --moved so bag data always has a size after being created - keeping outside if statement for older data without a size
 	if not bagID or bagID == "inv" then
 		local theBag = selfPlayer.Bag100
 		theBag.link = nil
 		theBag.icon = ICON_Equipped_Items
 		
-		for invNum = 1, 18 do
+		for invNum = 1, 27 do
 			local realInvNum = invNum
-			if invNum == 18 then
+			if invNum >= 18 then
 				-- Save tabard to slot 18
-				realInvNum = 19
+				realInvNum = invNum + 1
 			end
 			local itemLink = GetInventoryItemLink("player", realInvNum)
+			if (invNum > 19 and itemLink and selfPlayer.Bag100.size == 18) then selfPlayer.Bag100.size = 28 end
 			if itemLink then
 				theBag[invNum] = theBag[invNum] or newTable()
 				theBag[invNum].link = itemLink
@@ -4905,8 +4906,10 @@ function BankItems_PopulateBag(bagID)
 						-- Tabard fix
 						idx = 19
 					end
-					_, textureName = GetInventorySlotInfo(BANKITEMS_INVSLOT[idx])
-					button.icon:SetTexture(textureName)
+					if idx <= 18 then 
+						_, textureName = GetInventorySlotInfo(BANKITEMS_INVSLOT[idx]) 
+						button.icon:SetTexture(textureName)
+					end
 				else
 					button.icon:SetTexture()
 				end

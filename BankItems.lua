@@ -3189,7 +3189,7 @@ function BankItems_UpgradeDataTo60200()
 			local TOC
 			for _, bagNum in ipairs(BAGNUMBERS) do
 				bagString = format("Bag%d", bagNum)
-				if bagNum >4 and bagNum < 12 then --bank bags
+				if bagNum >= 6 and bagNum < 12 then --bank bags
 					TOC = value.bankTOC
 				elseif bagNum == 101 or bagNum == 103 or bagNum == 104 then --other storage areas you must open to update
 					TOC = value[bagString] and value[bagString].TOC
@@ -3316,7 +3316,7 @@ function BankItems_UpgradeDataToLegion()
 			local TOC
 			for _, bagNum in ipairs(BAGNUMBERS) do
 				bagString = format("Bag%d", bagNum)
-				if bagNum >4 and bagNum < 12 then --bank bags
+				if bagNum >= 6 and bagNum < 12 then --bank bags
 					TOC = value.bankTOC
 				elseif bagNum == 101 or bagNum == 103 or bagNum == 104 then --other storage areas you must open to update
 					TOC = value[bagString] and value[bagString].TOC
@@ -4531,7 +4531,7 @@ end
 
 function BankItems_OpenBagsByBehavior(bank, inv, equip, mail, currency, auction, void, reagent, guild)
 	if inv then
-		for i = 0, 4 do
+		for i = BACKPACK_CONTAINER, NUM_TOTAL_EQUIPPED_BAG_SLOTS do
 			BagContainerAr[i]:Hide()
 			BagButtonAr[i]:Click()
 		end

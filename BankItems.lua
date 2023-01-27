@@ -210,7 +210,7 @@ local GetMoney, IsReagentBankUnlocked = GetMoney, IsReagentBankUnlocked
 local GetGuildBankTabInfo, GetGuildBankItemInfo, GetGuildBankItemLink = GetGuildBankTabInfo, GetGuildBankItemInfo, GetGuildBankItemLink
 local GetInboxHeaderInfo, GetInboxItem, GetInboxItemLink = GetInboxHeaderInfo, GetInboxItem, GetInboxItemLink
 local GetMerchantItemCostItem = GetMerchantItemCostItem
-local GetRecipeItemLink, GetRecipeFixedReagentItemLink, GetQuestLogItemLink, GetQuestItemLink = C_TradeSkillUI.GetRecipeItemLink, C_TradeSkillUI.GetRecipeFixedReagentItemLink, GetQuestLogItemLink, GetQuestItemLink
+local GetItemReagentQualityByItemInfo, GetRecipeItemLink, GetRecipeFixedReagentItemLink, GetQuestLogItemLink, GetQuestItemLink = C_TradeSkillUI.GetItemReagentQualityByItemInfo, C_TradeSkillUI.GetRecipeItemLink, C_TradeSkillUI.GetRecipeFixedReagentItemLink, GetQuestLogItemLink, GetQuestItemLink
 local GetItemIcon, GetItemInfo, GetItemCount = GetItemIcon, GetItemInfo, GetItemCount
 local GetPetInfoBySpeciesID = C_PetJournal.GetPetInfoBySpeciesID
 local ShowInspectCursor, ResetCursor, GetMouseFocus, IsControlKeyDown = ShowInspectCursor, ResetCursor, GetMouseFocus, IsControlKeyDown
@@ -6661,52 +6661,78 @@ function BankItems_AddTooltipData(self, ...)
 		}
 		local totalCount = 0
 		local characters = 0
+		local quality = GetItemReagentQualityByItemInfo(link)
+		local icon1, icon2, icon3 = C_Texture.GetCraftingReagentQualityChatIcon(1), C_Texture.GetCraftingReagentQualityChatIcon(2), C_Texture.GetCraftingReagentQualityChatIcon(3)
+		local q1, q2, q3 = 0, 0, 0
+		if quality then q1, q2, q3 = item-quality+1, item-quality+2, item-quality+3 end
+
+		-- CURRENT CHARACTER
 		if BankItems_SelfCache[item] then
-			local text
-			local counttable = BankItems_SelfCache[item]
-			totalCount = totalCount + (counttable.count or 0)
-			
-			baginfos[1][2] = counttable.bank
-			baginfos[2][2] = counttable.inv
-			baginfos[3][2] = counttable.equipped
-			baginfos[4][2] = counttable.mail
-			baginfos[5][2] = counttable.auction
-			baginfos[6][2] = counttable.currency
-			baginfos[7][2] = counttable.voidstorage
-			baginfos[8][2] = counttable.reagentbank
-			
-			if link:match("(currency:%d+)") then --currencies can only be in one place
-				text = format("%s %s %d", strsplit("|", selfPlayerName), L["has"], counttable.count)
-			else
-				text = format("%s %s %d [", strsplit("|", selfPlayerName), L["has"], counttable.count)
+			if quality then --has a quality, should be some kind of crafting reagent, get qualities 1-3
+				local text
+				local counttable1, counttable2, counttable3 = BankItems_SelfCache[q1], BankItems_SelfCache[q2], BankItems_SelfCache[q3]
+
+				if counttable1 then
+					totalCount = totalCount + (counttable1.count or 0)
+					
+					baginfos[1][2] = (baginfos[1][2] or 0) + (counttable1.bank or 0)
+					baginfos[2][2] = (baginfos[2][2] or 0) + (counttable1.inv or 0)
+					baginfos[3][2] = (baginfos[3][2] or 0) + (counttable1.equipped or 0)
+					baginfos[4][2] = (baginfos[4][2] or 0) + (counttable1.mail or 0)
+					baginfos[5][2] = (baginfos[5][2] or 0) + (counttable1.auction or 0)
+					baginfos[6][2] = (baginfos[6][2] or 0) + (counttable1.currency or 0)
+					baginfos[7][2] = (baginfos[7][2] or 0) + (counttable1.voidstorage or 0)
+					baginfos[8][2] = (baginfos[8][2] or 0) + (counttable1.reagentbank or 0)
+				end
+				
+				if counttable2 then
+					totalCount = totalCount + (counttable2.count or 0)
+					
+					baginfos[1][2] = (baginfos[1][2] or 0) + (counttable2.bank or 0)
+					baginfos[2][2] = (baginfos[2][2] or 0) + (counttable2.inv or 0)
+					baginfos[3][2] = (baginfos[3][2] or 0) + (counttable2.equipped or 0)
+					baginfos[4][2] = (baginfos[4][2] or 0) + (counttable2.mail or 0)
+					baginfos[5][2] = (baginfos[5][2] or 0) + (counttable2.auction or 0)
+					baginfos[6][2] = (baginfos[6][2] or 0) + (counttable2.currency or 0)
+					baginfos[7][2] = (baginfos[7][2] or 0) + (counttable2.voidstorage or 0)
+					baginfos[8][2] = (baginfos[8][2] or 0) + (counttable2.reagentbank or 0)
+				end
+				
+				if counttable3 then
+					totalCount = totalCount + (counttable3.count or 0)
+					
+					baginfos[1][2] = (baginfos[1][2] or 0) + (counttable3.bank or 0)
+					baginfos[2][2] = (baginfos[2][2] or 0) + (counttable3.inv or 0)
+					baginfos[3][2] = (baginfos[3][2] or 0) + (counttable3.equipped or 0)
+					baginfos[4][2] = (baginfos[4][2] or 0) + (counttable3.mail or 0)
+					baginfos[5][2] = (baginfos[5][2] or 0) + (counttable3.auction or 0)
+					baginfos[6][2] = (baginfos[6][2] or 0) + (counttable3.currency or 0)
+					baginfos[7][2] = (baginfos[7][2] or 0) + (counttable3.voidstorage or 0)
+					baginfos[8][2] = (baginfos[8][2] or 0) + (counttable3.reagentbank or 0)
+				end
+				
+				text = format("%s %s ", strsplit("|", selfPlayerName), L["has"])
+				if counttable1 then text = text..format("%d%s", counttable1.count, icon1) end
+				if counttable2 then text = text..format("%d%s", counttable2.count, icon2) end
+				if counttable3 then text = text..format("%d%s", counttable3.count, icon3) end
+				text = text.."["
 				local first = true
 				for i = 1, #baginfos do
-					if baginfos[i][2] then
+					if baginfos[i][2] and baginfos[i][2] > 0 then
 						if not first then text = text..", " end
 						text = text..baginfos[i][1].." "..baginfos[i][2]
 						first = false
 					end
 				end
 				text = text.."]"
-			end
-			tinsert(BankItems_TooltipCache[item], text)
-			characters = characters + 1
-		end
-		if BankItems_Cache[item] then
-			for who, counttable in pairs(BankItems_Cache[item]) do
+			
+				tinsert(BankItems_TooltipCache[item], text)
+				characters = characters + 1
+			else
 				local text
-				local name
-				local n, r = strsplit("|", who)
-				if selfPlayerRealmName ~= r then
-					name = n.."-"..r
-				else
-					name = n
-				end
-				if BankItems_FactionCache[who] ~= selfPlayer.faction then
-					name = name.."*"
-				end
-				totalCount = totalCount + counttable.count
-
+				local counttable = BankItems_SelfCache[item]
+				totalCount = totalCount + (counttable.count or 0)
+				
 				baginfos[1][2] = counttable.bank
 				baginfos[2][2] = counttable.inv
 				baginfos[3][2] = counttable.equipped
@@ -6717,9 +6743,9 @@ function BankItems_AddTooltipData(self, ...)
 				baginfos[8][2] = counttable.reagentbank
 				
 				if link:match("(currency:%d+)") then --currencies can only be in one place
-					text = format("%s %s %d", name, L["has"], counttable.count)
+					text = format("%s %s %d", strsplit("|", selfPlayerName), L["has"], counttable.count)
 				else
-					text = format("%s %s %d [", name, L["has"], counttable.count);
+					text = format("%s %s %d [", strsplit("|", selfPlayerName), L["has"], counttable.count)
 					local first = true
 					for i = 1, #baginfos do
 						if baginfos[i][2] then
@@ -6733,24 +6759,258 @@ function BankItems_AddTooltipData(self, ...)
 				tinsert(BankItems_TooltipCache[item], text)
 				characters = characters + 1
 			end
+
 		end
-		if BankItems_GuildCache[item] then
-			for who, counttable in pairs(BankItems_GuildCache[item]) do
-				local n, r = strsplit("|", who)
+		
+		-- reset to re-use
+		baginfos[1][2] = 0
+		baginfos[2][2] = 0
+		baginfos[3][2] = 0
+		baginfos[4][2] = 0
+		baginfos[5][2] = 0
+		baginfos[6][2] = 0
+		baginfos[7][2] = 0
+		baginfos[8][2] = 0
+		
+		-- OTHER CHARACTERS
+		if quality then
+			local alts = newTable()
+			for k=q1, q3 do
+				if BankItems_Cache[k] then 
+					for who, counttable in pairs(BankItems_Cache[k]) do
+						alts[who] = 1
+					end
+				end
+			end
+			
+			for a, _ in pairs(alts) do
+				local counttable1, counttable2, counttable3 
+				if BankItems_Cache[q1] then counttable1 = BankItems_Cache[q1][a] end
+				if BankItems_Cache[q2] then counttable2 = BankItems_Cache[q2][a] end
+				if BankItems_Cache[q3] then counttable3 = BankItems_Cache[q3][a] end
+				
+				if counttable1 then
+					totalCount = totalCount + (counttable1.count or 0)
+					
+					baginfos[1][2] = (baginfos[1][2] or 0) + (counttable1.bank or 0)
+					baginfos[2][2] = (baginfos[2][2] or 0) + (counttable1.inv or 0)
+					baginfos[3][2] = (baginfos[3][2] or 0) + (counttable1.equipped or 0)
+					baginfos[4][2] = (baginfos[4][2] or 0) + (counttable1.mail or 0)
+					baginfos[5][2] = (baginfos[5][2] or 0) + (counttable1.auction or 0)
+					baginfos[6][2] = (baginfos[6][2] or 0) + (counttable1.currency or 0)
+					baginfos[7][2] = (baginfos[7][2] or 0) + (counttable1.voidstorage or 0)
+					baginfos[8][2] = (baginfos[8][2] or 0) + (counttable1.reagentbank or 0)
+				end
+				
+				if counttable2 then
+					totalCount = totalCount + (counttable2.count or 0)
+					
+					baginfos[1][2] = (baginfos[1][2] or 0) + (counttable2.bank or 0)
+					baginfos[2][2] = (baginfos[2][2] or 0) + (counttable2.inv or 0)
+					baginfos[3][2] = (baginfos[3][2] or 0) + (counttable2.equipped or 0)
+					baginfos[4][2] = (baginfos[4][2] or 0) + (counttable2.mail or 0)
+					baginfos[5][2] = (baginfos[5][2] or 0) + (counttable2.auction or 0)
+					baginfos[6][2] = (baginfos[6][2] or 0) + (counttable2.currency or 0)
+					baginfos[7][2] = (baginfos[7][2] or 0) + (counttable2.voidstorage or 0)
+					baginfos[8][2] = (baginfos[8][2] or 0) + (counttable2.reagentbank or 0)
+				end
+				
+				if counttable3 then
+					totalCount = totalCount + (counttable3.count or 0)
+					
+					baginfos[1][2] = (baginfos[1][2] or 0) + (counttable3.bank or 0)
+					baginfos[2][2] = (baginfos[2][2] or 0) + (counttable3.inv or 0)
+					baginfos[3][2] = (baginfos[3][2] or 0) + (counttable3.equipped or 0)
+					baginfos[4][2] = (baginfos[4][2] or 0) + (counttable3.mail or 0)
+					baginfos[5][2] = (baginfos[5][2] or 0) + (counttable3.auction or 0)
+					baginfos[6][2] = (baginfos[6][2] or 0) + (counttable3.currency or 0)
+					baginfos[7][2] = (baginfos[7][2] or 0) + (counttable3.voidstorage or 0)
+					baginfos[8][2] = (baginfos[8][2] or 0) + (counttable3.reagentbank or 0)
+				end
+				
+				local text
 				local name
-				local n, r = strsplit("|", who)
+				local n, r = strsplit("|", a)
 				if selfPlayerRealmName ~= r then
 					name = n.."-"..r
 				else
 					name = n
 				end
-				if BankItems_GFactionCache[who] ~= selfPlayer.faction then
+				if BankItems_FactionCache[a] ~= selfPlayer.faction then
 					name = name.."*"
 				end
-				local text = ("<%s> %s %d"):format(name, L["has"], counttable.count)
-				totalCount = totalCount + counttable.count
+				
+				text = format("%s %s ", name, L["has"])
+				if counttable1 then text = text..format("%d%s", counttable1.count, icon1) end
+				if counttable2 then text = text..format("%d%s", counttable2.count, icon2) end
+				if counttable3 then text = text..format("%d%s", counttable3.count, icon3) end
+				text = text.."["
+				local first = true
+				for i = 1, #baginfos do
+					if baginfos[i][2] and baginfos[i][2] > 0 then
+						if not first then text = text..", " end
+						text = text..baginfos[i][1].." "..baginfos[i][2]
+						first = false
+					end
+				end
+				text = text.."]"
+			
 				tinsert(BankItems_TooltipCache[item], text)
 				characters = characters + 1
+			
+			end
+		else
+			if BankItems_Cache[item] then
+				for who, counttable in pairs(BankItems_Cache[item]) do
+					local text
+					local name
+					local n, r = strsplit("|", who)
+					if selfPlayerRealmName ~= r then
+						name = n.."-"..r
+					else
+						name = n
+					end
+					if BankItems_FactionCache[who] ~= selfPlayer.faction then
+						name = name.."*"
+					end
+					totalCount = totalCount + counttable.count
+
+					baginfos[1][2] = counttable.bank
+					baginfos[2][2] = counttable.inv
+					baginfos[3][2] = counttable.equipped
+					baginfos[4][2] = counttable.mail
+					baginfos[5][2] = counttable.auction
+					baginfos[6][2] = counttable.currency
+					baginfos[7][2] = counttable.voidstorage
+					baginfos[8][2] = counttable.reagentbank
+					
+					if link:match("(currency:%d+)") then --currencies can only be in one place
+						text = format("%s %s %d", name, L["has"], counttable.count)
+					else
+						text = format("%s %s %d [", name, L["has"], counttable.count);
+						local first = true
+						for i = 1, #baginfos do
+							if baginfos[i][2] then
+								if not first then text = text..", " end
+								text = text..baginfos[i][1].." "..baginfos[i][2]
+								first = false
+							end
+						end
+						text = text.."]"
+					end
+					tinsert(BankItems_TooltipCache[item], text)
+					characters = characters + 1
+				end
+			end
+		end
+		
+		-- reset to re-use
+		baginfos[1][2] = 0
+		baginfos[2][2] = 0
+		baginfos[3][2] = 0
+		baginfos[4][2] = 0
+		baginfos[5][2] = 0
+		baginfos[6][2] = 0
+		baginfos[7][2] = 0
+		baginfos[8][2] = 0
+		
+		-- GUILD BANKS
+		if quality then
+		
+			local guilds = newTable()
+			for k=q1, q3 do
+				if BankItems_GuildCache[k] then 
+					for who, counttable in pairs(BankItems_GuildCache[k]) do
+						guilds[who] = 1
+					end
+				end
+			end
+			
+			for g, _ in pairs(guilds) do
+				local counttable1, counttable2, counttable3 
+				if BankItems_GuildCache[q1] then counttable1 = BankItems_GuildCache[q1][g] end
+				if BankItems_GuildCache[q2] then counttable2 = BankItems_GuildCache[q2][g] end
+				if BankItems_GuildCache[q3] then counttable3 = BankItems_GuildCache[q3][g] end
+				
+				if counttable1 then
+					totalCount = totalCount + (counttable1.count or 0)
+					
+					baginfos[1][2] = (baginfos[1][2] or 0) + (counttable1.bank or 0)
+					baginfos[2][2] = (baginfos[2][2] or 0) + (counttable1.inv or 0)
+					baginfos[3][2] = (baginfos[3][2] or 0) + (counttable1.equipped or 0)
+					baginfos[4][2] = (baginfos[4][2] or 0) + (counttable1.mail or 0)
+					baginfos[5][2] = (baginfos[5][2] or 0) + (counttable1.auction or 0)
+					baginfos[6][2] = (baginfos[6][2] or 0) + (counttable1.currency or 0)
+					baginfos[7][2] = (baginfos[7][2] or 0) + (counttable1.voidstorage or 0)
+					baginfos[8][2] = (baginfos[8][2] or 0) + (counttable1.reagentbank or 0)
+				end
+				
+				if counttable2 then
+					totalCount = totalCount + (counttable2.count or 0)
+					
+					baginfos[1][2] = (baginfos[1][2] or 0) + (counttable2.bank or 0)
+					baginfos[2][2] = (baginfos[2][2] or 0) + (counttable2.inv or 0)
+					baginfos[3][2] = (baginfos[3][2] or 0) + (counttable2.equipped or 0)
+					baginfos[4][2] = (baginfos[4][2] or 0) + (counttable2.mail or 0)
+					baginfos[5][2] = (baginfos[5][2] or 0) + (counttable2.auction or 0)
+					baginfos[6][2] = (baginfos[6][2] or 0) + (counttable2.currency or 0)
+					baginfos[7][2] = (baginfos[7][2] or 0) + (counttable2.voidstorage or 0)
+					baginfos[8][2] = (baginfos[8][2] or 0) + (counttable2.reagentbank or 0)
+				end
+				
+				if counttable3 then
+					totalCount = totalCount + (counttable3.count or 0)
+					
+					baginfos[1][2] = (baginfos[1][2] or 0) + (counttable3.bank or 0)
+					baginfos[2][2] = (baginfos[2][2] or 0) + (counttable3.inv or 0)
+					baginfos[3][2] = (baginfos[3][2] or 0) + (counttable3.equipped or 0)
+					baginfos[4][2] = (baginfos[4][2] or 0) + (counttable3.mail or 0)
+					baginfos[5][2] = (baginfos[5][2] or 0) + (counttable3.auction or 0)
+					baginfos[6][2] = (baginfos[6][2] or 0) + (counttable3.currency or 0)
+					baginfos[7][2] = (baginfos[7][2] or 0) + (counttable3.voidstorage or 0)
+					baginfos[8][2] = (baginfos[8][2] or 0) + (counttable3.reagentbank or 0)
+				end
+				
+				local text
+				local name
+				local n, r = strsplit("|", g)
+				if selfPlayerRealmName ~= r then
+					name = n.."-"..r
+				else
+					name = n
+				end
+				if BankItems_FactionCache[g] ~= selfPlayer.faction then
+					name = name.."*"
+				end
+				
+				text = format("<%s> %s ", name, L["has"])
+				if counttable1 then text = text..format("%d%s", counttable1.count, icon1) end
+				if counttable2 then text = text..format("%d%s", counttable2.count, icon2) end
+				if counttable3 then text = text..format("%d%s", counttable3.count, icon3) end
+			
+				tinsert(BankItems_TooltipCache[item], text)
+				characters = characters + 1
+			end
+
+		else
+			if BankItems_GuildCache[item] then
+				for who, counttable in pairs(BankItems_GuildCache[item]) do
+					local n, r = strsplit("|", who)
+					local name
+					local n, r = strsplit("|", who)
+					if selfPlayerRealmName ~= r then
+						name = n.."-"..r
+					else
+						name = n
+					end
+					if BankItems_GFactionCache[who] ~= selfPlayer.faction then
+						name = name.."*"
+					end
+					local text = ("<%s> %s %d"):format(name, L["has"], counttable.count)
+					totalCount = totalCount + counttable.count
+					tinsert(BankItems_TooltipCache[item], text)
+					characters = characters + 1
+				end
 			end
 		end
 		if characters > 1 then

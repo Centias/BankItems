@@ -258,6 +258,12 @@ local TooltipList = {
 	"TooltipExchange_TooltipShow", -- TooltipExchange support
 }
 
+-- Some reagent IDs are out of order and are causing problems for tooltips
+local ProblematicOreIDs = {
+	[189143] = 189143, [188658] = 188658, [190311] = 190311, --Draconium Ore
+	[190395] = 190395, [190396] = 190396, [190394] = 190394 --Serevite Ore 
+}
+
 -- Localize more frames to see if it fixes the Lua interpreter errors on macs
 local BankItems_MoneyFrame
 local BankItems_MoneyFrameTotal
@@ -6646,6 +6652,7 @@ function BankItems_AddTooltipData(self, ...)
 		return ...
 	end
 	local item = BankItems_createUniqueItem(link) or item
+	if not strfind(item, "currency", 1, true) and strfind(item, ":", 1, true) then _, item = strsplit(":", item) end
 	if not BankItems_TooltipCache[item] then
 		BankItems_TooltipCache[item] = newTable()
 
@@ -6663,14 +6670,30 @@ function BankItems_AddTooltipData(self, ...)
 		local characters = 0
 		local quality = GetItemReagentQualityByItemInfo(link)
 		local icon1, icon2, icon3 = C_Texture.GetCraftingReagentQualityChatIcon(1), C_Texture.GetCraftingReagentQualityChatIcon(2), C_Texture.GetCraftingReagentQualityChatIcon(3)
-		local q1, q2, q3 = 0, 0, 0
-		if quality then q1, q2, q3 = item-quality+1, item-quality+2, item-quality+3 end
+		local q = {0, 0, 0}
+		if quality then 
+			local itemName = GetItemInfo(link)
+			
+			if ProblematicOreIDs[item] then
+				for k, v in pairs(ProblematicOreIDs) do
+					local n, l = GetItemInfo(ProblematicOreIDs[k])
+					if n == itemName then
+						qual = GetItemReagentQualityByItemInfo(l)
+						if qual == 1 then q[1] = ProblematicOreIDs[k] end
+						if qual == 2 then q[2] = ProblematicOreIDs[k] end
+						if qual == 3 then q[3] = ProblematicOreIDs[k] end
+					end
+				end
+			else
+				q[1], q[2], q[3] = item-quality+1, item-quality+2, item-quality+3 
+			end
+		end
 
 		-- CURRENT CHARACTER
 		if BankItems_SelfCache[item] then
 			if quality then --has a quality, should be some kind of crafting reagent, get qualities 1-3
 				local text
-				local counttable1, counttable2, counttable3 = BankItems_SelfCache[q1], BankItems_SelfCache[q2], BankItems_SelfCache[q3]
+				local counttable1, counttable2, counttable3 = BankItems_SelfCache[q[1]], BankItems_SelfCache[q[2]], BankItems_SelfCache[q[3]]
 
 				if counttable1 then
 					totalCount = totalCount + (counttable1.count or 0)
@@ -6775,19 +6798,30 @@ function BankItems_AddTooltipData(self, ...)
 		-- OTHER CHARACTERS
 		if quality then
 			local alts = newTable()
-			for k=q1, q3 do
-				if BankItems_Cache[k] then 
-					for who, counttable in pairs(BankItems_Cache[k]) do
-						alts[who] = 1
-					end
+
+			if BankItems_Cache[q[1]] then 
+				for who, counttable in pairs(BankItems_Cache[q[1]]) do
+					alts[who] = 1
+				end
+			end
+			
+			if BankItems_Cache[q[2]] then 
+				for who, counttable in pairs(BankItems_Cache[q[2]]) do
+					alts[who] = 1
+				end
+			end
+						
+			if BankItems_Cache[q[3]] then 
+				for who, counttable in pairs(BankItems_Cache[q[3]]) do
+					alts[who] = 1
 				end
 			end
 			
 			for a, _ in pairs(alts) do
 				local counttable1, counttable2, counttable3 
-				if BankItems_Cache[q1] then counttable1 = BankItems_Cache[q1][a] end
-				if BankItems_Cache[q2] then counttable2 = BankItems_Cache[q2][a] end
-				if BankItems_Cache[q3] then counttable3 = BankItems_Cache[q3][a] end
+				if BankItems_Cache[q[1]] then counttable1 = BankItems_Cache[q[1]][a] end
+				if BankItems_Cache[q[2]] then counttable2 = BankItems_Cache[q[2]][a] end
+				if BankItems_Cache[q[3]] then counttable3 = BankItems_Cache[q[3]][a] end
 				
 				if counttable1 then
 					totalCount = totalCount + (counttable1.count or 0)
@@ -6918,19 +6952,30 @@ function BankItems_AddTooltipData(self, ...)
 		if quality then
 		
 			local guilds = newTable()
-			for k=q1, q3 do
-				if BankItems_GuildCache[k] then 
-					for who, counttable in pairs(BankItems_GuildCache[k]) do
-						guilds[who] = 1
-					end
+					
+			if BankItems_GuildCache[q[1]] then 
+				for who, counttable in pairs(BankItems_GuildCache[q[1]]) do
+					guilds[who] = 1
+				end
+			end
+			
+			if BankItems_GuildCache[q[2]] then 
+				for who, counttable in pairs(BankItems_GuildCache[q[2]]) do
+					guilds[who] = 1
+				end
+			end
+						
+			if BankItems_GuildCache[q[3]] then 
+				for who, counttable in pairs(BankItems_GuildCache[q[3]]) do
+					guilds[who] = 1
 				end
 			end
 			
 			for g, _ in pairs(guilds) do
 				local counttable1, counttable2, counttable3 
-				if BankItems_GuildCache[q1] then counttable1 = BankItems_GuildCache[q1][g] end
-				if BankItems_GuildCache[q2] then counttable2 = BankItems_GuildCache[q2][g] end
-				if BankItems_GuildCache[q3] then counttable3 = BankItems_GuildCache[q3][g] end
+				if BankItems_GuildCache[q[1]] then counttable1 = BankItems_GuildCache[q[1]][g] end
+				if BankItems_GuildCache[q[2]] then counttable2 = BankItems_GuildCache[q[2]][g] end
+				if BankItems_GuildCache[q[3]] then counttable3 = BankItems_GuildCache[q[3]][g] end
 				
 				if counttable1 then
 					totalCount = totalCount + (counttable1.count or 0)

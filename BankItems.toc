@@ -2,7 +2,7 @@
 ## Title: BankItems
 ## Title-zhCN: 离线银行 BankItems
 ## Title-zhTW: 離線銀行 BankItems
-## Version: 10.0.2.7
+## Version: 10.0.2.8
 ## Notes: View bank, inventory, mail, equipped and guild bank contents from any character anywhere!
 ## Notes-koKR: 은행, 가방, 우편, 착용한 장비, 길드 금고의 내용물을 어디서나 어떤 캐릭터로도 볼 수 있습니다!
 ## Notes-ruRU: Просмотр содержимого банка, банка гильдии, инвентаря, почты любого вашего персонажа везде и в любое время!
@@ -11,7 +11,8 @@
 ## Notes-zhCN: 让你可以随时浏览本ID所有服务器所有人物的装备以及背包、邮件、银行和公会银行中的物品|N插件命令/bi|N本地化: Isler
 ## Notes-zhTW: 讓你可以隨時流覽本ID所有伺服器所有人物的裝備以及背包、郵件、銀行和公會銀行中的物品|N插件命令/bi|N本地化: Isler
 ## Notes-esES: View bank, inventory, mail, equipped and guild bank contents from any character anywhere!
-## Author: Xinhuan
+## Current Author: Centias
+## Original Author: Xinhuan
 ## X-Category: Inventory
 ## X-RelSite-UI.WoW: 1699
 ## X-Email: xinhuan AT gmail DOT com

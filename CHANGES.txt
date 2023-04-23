@@ -1,4 +1,8 @@
 ------------------------------------------------------------------------
+10.0.2.8 | Centias | 2023-04-22 10:27:49
+
+Update: Fixed Draconium and Serevite Ore not showing all ranks in the tooltip because the item IDs are out of order.
+------------------------------------------------------------------------
 10.0.2.7 | Centias | 2023-01-26 18:55:43
 
 Update: Reworked tooltips for reagents with different qualities to include breakdowns and totals for all qualities.

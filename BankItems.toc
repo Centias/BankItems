@@ -1,4 +1,4 @@
-## Interface: 100002
+## Interface: 100007
 ## Title: BankItems
 ## Title-zhCN: 离线银行 BankItems
 ## Title-zhTW: 離線銀行 BankItems

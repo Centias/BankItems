@@ -3878,10 +3878,10 @@ function BankItems_SaveItems(skipBags)
 
 		--Read the contents of each bank bag (bagId = 6..12)
 		--Dragonflight reagent pouch slot is now 6, thanks for that Blizz
-		--ITEM_INVENTORY_BANK_BAG_OFFSET+2 = 6
+		--ITEM_INVENTORY_BANK_BAG_OFFSET+1 = 6
 		--ITEM_INVENTORY_BANK_BAG_OFFSET+1+NUM_BANKBAGSLOTS = 12
 		if not skipBags then
-			for bagNum = ITEM_INVENTORY_BANK_BAG_OFFSET+2, ITEM_INVENTORY_BANK_BAG_OFFSET+1+NUM_BANKBAGSLOTS do
+			for bagNum = ITEM_INVENTORY_BANK_BAG_OFFSET+1, ITEM_INVENTORY_BANK_BAG_OFFSET+1+NUM_BANKBAGSLOTS do
 				local bagNum_ID = BankButtonIDToInvSlotID(bagNum, 1)-5		-- BankButtonIDToInvSlotID returns wrong slot IDs for bank bags, -4 to get shifted proper IDs
 				local itemLink = GetInventoryItemLink("player", bagNum_ID)
 				if itemLink then

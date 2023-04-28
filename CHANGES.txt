@@ -1,4 +1,8 @@
 ------------------------------------------------------------------------
+10.0.2.9 | Centias | 2023-04-28 00:11:31
+
+Update: Fixed initial save of bag 6 (first bank bag)
+------------------------------------------------------------------------
 10.0.2.8 | Centias | 2023-04-22 10:27:49
 
 Update: Fixed Draconium and Serevite Ore not showing all ranks in the tooltip because the item IDs are out of order.

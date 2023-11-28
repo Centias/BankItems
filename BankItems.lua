@@ -38,6 +38,7 @@
 		/bis itemname : search for items
 		/bigb : open BankItems guild bank
 		/bigb clear : clear currently selected guild's info
+		/bimc : open Mail Call to see expiring mail
 
 		Most options are found in the GUI options panel.
 
@@ -259,9 +260,12 @@ local TooltipList = {
 }
 
 -- Some reagent IDs are out of order and are causing problems for tooltips
-local ProblematicOreIDs = {
+local ProblematicItemIDs = {
 	[189143] = 189143, [188658] = 188658, [190311] = 190311, --Draconium Ore
-	[190395] = 190395, [190396] = 190396, [190394] = 190394 --Serevite Ore 
+	[190395] = 190395, [190396] = 190396, [190394] = 190394, --Serevite Ore 
+	[192852] = 192852, [192853] = 192853, [192855] = 192855,  --Alexstraszite
+	[192862] = 192862, [192863] = 192863, [192865] = 192865,  --Alexstraszite
+
 }
 
 -- Localize more frames to see if it fixes the Lua interpreter errors on macs
@@ -3508,6 +3512,9 @@ function BankItems_SlashHandler(message)
 		BankItems_Search(searchText)
 		BankItems_ExportFrame:Show()
 		return
+	elseif strfind(msg, "mailcall") then
+		BankItems_MailCall()
+		BankItems_ExportFrame:Show()
 	elseif msg == "clear" then
 		if BankItems_Frame:IsVisible() then
 			BankItems_DelPlayer(bankPlayerName)
@@ -3574,6 +3581,7 @@ function BankItems_SlashHandler(message)
 		BankItems_Chat(L["-- /bis itemname : search for items"])
 		BankItems_Chat(L["-- /bigb : open BankItems guild bank"])
 		BankItems_Chat(L["-- /bigb clear : clear currently selected guild's info"])
+		BankItems_Chat(L["-- /bimc : open Mail Call to see expiring mail"])
 		return
 	end
 
@@ -3914,7 +3922,7 @@ function BankItems_SaveItems(skipBags)
 				else
 					selfPlayer[format("Bag%d", bagNum)] = delTable(selfPlayer[format("Bag%d", bagNum)])
 					if bankPlayer == selfPlayer then
-						BagContainerAr[bagNum]:Hide()
+						if BagContainerAr[bagNum] then BagContainerAr[bagNum]:Hide() end
 					end
 				end
 			end
@@ -3970,7 +3978,7 @@ function BankItems_SaveInvItems(bagID)
 			else
 				selfPlayer[bagString] = delTable(selfPlayer[bagString])
 				if bankPlayer == selfPlayer then
-					BagContainerAr[bagNum]:Hide()
+					if BagContainerAr[bagNum] then BagContainerAr[bagNum]:Hide() end
 				end
 			end
 		end
@@ -4364,9 +4372,11 @@ function UpdateClosedBankCounts(slot) --update counts that may have changed from
 			end
 		elseif slot[i] > 100 then -- reagent bank changed
 			theBag = selfPlayer.Bag105
-			if theBag[slot[i]-100] and theBag[slot[i]-100].link then
-				temp = tonumber(strmatch(theBag[slot[i]-100].link, "item:(%d+)"))
-				if temp then data[temp] = data[temp] or newTable() end
+			if theBag then
+				if theBag[slot[i]-100] and theBag[slot[i]-100].link then
+					temp = tonumber(strmatch(theBag[slot[i]-100].link, "item:(%d+)"))
+					if temp then data[temp] = data[temp] or newTable() end
+				end
 			end
 		else --an equipped bank bag changed
 			theBag = selfPlayer[format("Bag%d", slot[i] - 24)]
@@ -6109,6 +6119,450 @@ function BankItems_DisplaySearch()
 	BankItems_ExportFrame:Show()
 end
 
+function BankItems_MailCall()
+	local searchText = ""
+	local t = newTable()
+	local line = 0
+	local prefix = "     "
+	local itemName, itemLink
+	local errorflag = false
+	local count
+	local searchTextOrg=searchText
+	local lineLimit = 2000
+	local errorCharactersList = newTable()
+
+	lastErrorSearch = searchText
+	-- if searchText ~= "" then
+		-- BankItems_Frame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
+		-- searchText = BankItems_SpecialCharactersLocalization(searchText)
+	-- end
+	
+	lastErrorItemID = 0
+	lastErrorTime = time()
+
+	-- Search filter setup
+	-- local searchFilter = newTable()
+	-- for i = 0, 5 do
+		-- searchFilter[i] = BankItems_Save.Behavior2[2]
+	-- end
+	-- for i = 6, 12 do
+		-- searchFilter[i] = BankItems_Save.Behavior2[1]
+	-- end
+	-- searchFilter[100] = BankItems_Save.Behavior2[3]
+	-- searchFilter[101] = BankItems_Save.Behavior2[4]
+	-- searchFilter[102] = BankItems_Save.Behavior2[2]
+	-- searchFilter[104] = BankItems_Save.Behavior2[1] -- consider void storage a bank bag for filtering purposes
+	-- searchFilter[105] = BankItems_Save.Behavior2[1] -- consider Reagent Bank a bank bag for filtering purposes
+
+	if BankItems_Save.GroupExportData then
+		-- Group similar items together in the report
+		local data = newTable()
+		local itemName = ""
+		for key, bankPlayer in pairs(BankItems_Save) do
+			local _, realm = strsplit("|", key)
+			if type(bankPlayer) == "table" and (BankItems_Save.SearchAllRealms or ((tContains(selfPlayerConRealms, realm) or tContains(selfPlayerConRealms, realmNormalizer[realm]) or realm == selfPlayerRealmName or realm == selfPlayerRealmNormalized) and bankPlayer.faction == selfPlayer.faction)) and key ~= "Behavior" and key ~= "Behavior2" then
+				-- if BankItems_Save.Behavior2[1] then
+					-- for num = 1, NUM_BANKGENERIC_SLOTS do
+						-- if bankPlayer[num] then
+							-- itemName = BankItems_ParseAndCorrectLink(bankPlayer, num)
+							-- if itemName == "" then
+								-- errorflag = true
+								-- errorCharactersList[key] = key
+								-- lastErrorItemID = tonumber(bankPlayer[num].link:match("item:([-%d]+)"))
+								-- lastErrorTime = time()
+							-- else
+								-- if searchText ~= "" then
+									-- templocalized = BankItems_SpecialCharactersLocalization(itemName)
+								-- end
+								-- if searchText == "" or strfind(templocalized, searchText, 1, true) then
+									-- data[itemName] = data[itemName] or newTable()
+									-- data[itemName][key] = data[itemName][key] or newTable()
+									-- data[itemName][key].count = (data[itemName][key].count or 0) + (bankPlayer[num].count or 1)
+									-- data[itemName][key].bank = (data[itemName][key].bank or 0) + (bankPlayer[num].count or 1)
+								-- end
+							-- end
+						-- end
+					-- end
+				-- end
+				--for _, bagNum in ipairs(BAGNUMBERS) do
+				local bagNum = 101
+					local theBag = bankPlayer[format("Bag%d", bagNum)]
+					if theBag then
+						local realSize = theBag.size or 0
+						if bagNum == 101 then
+							realSize = #theBag
+						-- elseif bagNum == 102 then
+							-- realSize = #theBag
+						-- elseif bagNum == 104 or bagNum == 105 then
+							-- realSize = theBag.realSize or #theBag
+						end
+						if type(theBag.link) == "string" then
+							itemName = BankItems_ParseAndCorrectLink(theBag)
+							if itemName == "" then
+								errorflag = true
+								errorCharactersList[key] = key
+								lastErrorItemID = tonumber(theBag.link:match("item:([-%d]+)"))
+								lastErrorTime = time()
+							else
+								if searchText ~= "" then
+									templocalized = BankItems_SpecialCharactersLocalization(itemName)
+								end
+								if searchText == "" or strfind(templocalized, searchText, 1, true) then
+									data[itemName] = data[itemName] or newTable()
+									data[itemName][key] = data[itemName][key] or newTable()
+									data[itemName][key].count = (data[itemName][key].count or 0) + (theBag.count or 1)
+									data[itemName][key].equipped = (data[itemName][key].equipped or 0) + (theBag.count or 1)
+								end
+							end
+						end
+						for bagItem = 1, realSize or 0 do -- if realSize is nil skip the loop since table is empty or has an error
+							if theBag[bagItem] and type(theBag[bagItem].link) == "string" then
+								itemName = BankItems_ParseAndCorrectLink(theBag, bagItem)
+								if itemName == "" then
+									errorflag = true
+									errorCharactersList[key] = key
+									lastErrorItemID = tonumber(theBag[bagItem].link:match("item:([-%d]+)"))
+									lastErrorTime = time()
+								else
+									if searchText ~= "" then
+										templocalized = BankItems_SpecialCharactersLocalization(itemName)
+									end
+									if searchText == "" or strfind(templocalized, searchText, 1, true) then
+										data[itemName] = data[itemName] or newTable()
+										data[itemName][key] = data[itemName][key] or newTable()
+										data[itemName][key].count = (data[itemName][key].count or 0) + (theBag[bagItem].count or 1)
+										-- if bagNum >= BACKPACK_CONTAINER and bagNum <= NUM_TOTAL_EQUIPPED_BAG_SLOTS then
+											-- data[itemName][key].inv = (data[itemName][key].inv or 0) + (theBag[bagItem].count or 1)
+										-- elseif bagNum == 100 then
+											-- data[itemName][key].equipped = (data[itemName][key].equipped or 0) + (theBag[bagItem].count or 1)
+										-- elseif bagNum == 102 then
+											-- data[itemName][key].currency = (data[itemName][key].currency or 0) + (theBag[bagItem].count or 1)
+										--else
+										if bagNum == 101 then
+											data[itemName][key].mail = (data[itemName][key].mail or 0) + (theBag[bagItem].count or 1)
+										-- elseif bagNum == 104 then
+											-- data[itemName][key].voidstorage = (data[itemName][key].voidstorage or 0) + (theBag[bagItem].count or 1)
+										-- elseif bagNum == 105 then
+											-- data[itemName][key].reagentbank = (data[itemName][key].reagentbank or 0) + (theBag[bagItem].count or 1)
+										-- else
+											-- data[itemName][key].bank = (data[itemName][key].bank or 0) + (theBag[bagItem].count or 1)
+										end
+									end
+								end
+							end
+						end
+					end
+				--end
+			end
+		end
+
+		-- if BankItems_Save.Behavior2[5] then	-- Search guild banks too
+			-- for key, bankPlayer in pairs(BankItems_SaveGuild) do
+				-- local _, realm = strsplit("|", key)
+				-- if type(bankPlayer) == "table" and (BankItems_Save.SearchAllRealms or ((tContains(selfPlayerConRealms, realm) or tContains(selfPlayerConRealms, realmNormalizer[realm]) or realm == selfPlayerRealmName or realm == selfPlayerRealmNormalized) and bankPlayer.faction == selfPlayer.faction)) then
+					-- for tab = 1, MAX_GUILDBANK_TABS do
+						-- if bankPlayer[tab] and bankPlayer[tab].seen then
+							-- -- Tab exists and seen before
+							-- local theBag = bankPlayer[tab]
+							-- for bagItem = 1, 98 do
+								-- if theBag[bagItem] then
+									-- itemName = BankItems_ParseAndCorrectLink(theBag, bagItem)
+									-- if itemName == "" then
+										-- errorflag = true
+										-- errorCharactersList[key] = key
+										-- lastErrorItemID = tonumber(theBag[bagItem].link:match("item:([-%d]+)"))
+										-- lastErrorTime = time()
+									-- else
+										-- if searchText ~= "" then
+											-- templocalized = BankItems_SpecialCharactersLocalization(itemName)
+										-- end
+										-- if searchText == "" or strfind(templocalized, searchText, 1, true) then
+											-- data[itemName] = data[itemName] or newTable()
+											-- data[itemName][key] = data[itemName][key] or newTable()
+											-- data[itemName][key].count = (data[itemName][key].count or 0) + (theBag[bagItem].count or 1)
+											-- data[itemName][key].gbank = (data[itemName][key].gbank or 0) + (theBag[bagItem].count or 1)
+										-- end
+									-- end
+								-- end
+							-- end
+						-- end
+					-- end
+				-- end
+			-- end
+		-- end
+
+		local baginfos = {
+			{ L["Bank"] },
+			{ L["Bags"] },
+			{ L["Equipped"] },
+			{ MAIL_LABEL },
+			{ GUILD_BANK },
+			{ CURRENCY },
+			{ VOID_STORAGE },
+			{ REAGENT_BANK }
+		}
+		-- Generate the report
+		for itemNameKey, whotable in pairs(data) do
+			if lineLimit and line > lineLimit then break end
+			line = line + 1
+			local line2 = line
+			local totalCount = 0
+			for who, counttable in pairs(whotable) do
+				local name
+				if counttable.gbank then
+					name = gsub(who, "(.*)|", "<%1>"..L[" of "])
+				else
+					name = gsub(who, "|", L[" of "])
+				end
+				totalCount = totalCount + counttable.count
+
+				baginfos[1][2] = counttable.bank
+				baginfos[2][2] = counttable.inv
+				baginfos[3][2] = counttable.equipped
+				baginfos[4][2] = counttable.mail
+				baginfos[5][2] = counttable.gbank
+				baginfos[6][2] = counttable.currency
+				baginfos[7][2] = counttable.voidstorage
+				baginfos[8][2] = counttable.reagentbank
+				local text = format("     %d %s (", counttable.count, name);
+				local first = true
+				for i = 1, #baginfos do
+					if baginfos[i][2] then
+						if not first then text = text..", " end
+						text = text..baginfos[i][1].." "..baginfos[i][2]
+						first = false
+					end
+				end
+				text = text..")"
+				line2 = line2 + 1
+				t[line2] = text
+			end
+			t[line] = format("%s (%d)", itemNameKey, totalCount)
+			line2 = line2 + 1
+			t[line2] = ""
+			line = line2
+		end
+		delTable(data)
+	else
+		-- Don't group similar items together in the report
+		for key, bankPlayer in pairs(BankItems_Save) do
+			if lineLimit and line > lineLimit then break end
+			local _, realm = strsplit("|", key)
+			if type(bankPlayer) == "table" and (BankItems_Save.SearchAllRealms or ((tContains(selfPlayerConRealms, realm) or tContains(selfPlayerConRealms, realmNormalizer[realm]) or realm == selfPlayerRealmName or realm == selfPlayerRealmNormalized) and bankPlayer.faction == selfPlayer.faction)) and key ~= "Behavior" and key ~= "Behavior2" then
+				count = 0
+				-- if BankItems_Save.Behavior2[1] then
+					-- for num = 1, NUM_BANKGENERIC_SLOTS do
+						-- if bankPlayer[num] then
+							-- if BankItems_Save.ExportPrefix then
+								-- prefix = "     "..L["Bank Item %d:"]:format(num).." "
+							-- end
+							-- itemName = BankItems_ParseAndCorrectLink(bankPlayer, num)
+							-- if itemName == "" then
+								-- errorflag = true
+								-- errorCharactersList[key] = key
+								-- lastErrorItemID = tonumber(bankPlayer[num].link:match("item:([-%d]+)"))
+								-- lastErrorTime = time()
+							-- else
+								-- if searchText ~= "" then
+									-- itemName = BankItems_SpecialCharactersLocalization(itemName)
+								-- end
+								
+								-- if searchText == "" or strfind(itemName, searchText, 1, true) then
+									-- count = count + 1
+									-- if count == 1 then
+										-- line = line + 1
+										-- t[line] = L["Contents of:"].." "..gsub(key, "|", L[" of "])
+									-- end
+									-- line = line + 1
+									-- t[line] = format("%s%d %s", prefix, bankPlayer[num].count or 1, BankItems_ParseLink(bankPlayer[num].link))
+								-- end
+							-- end
+						-- end
+					-- end
+				-- end
+				-- for _, bagNum in ipairs(BAGNUMBERS) do
+				local bagNum = 101
+					local theBag = bankPlayer[format("Bag%d", bagNum)]
+					if theBag then
+						local realSize = theBag.size or 0
+						if bagNum == 101 or bagNum == 102 then
+							realSize = #theBag
+						-- elseif bagNum == 104 or bagNum == 105 then
+							-- realSize = theBag.realSize or #theBag
+						end
+						if type(theBag.link) == "string" then
+							prefix = "     "..L["Bag %d:"]:format(bagNum)
+							itemName = BankItems_ParseAndCorrectLink(theBag)
+							if itemName == "" then
+								errorflag = true
+								errorCharactersList[key] = key
+								lastErrorItemID = tonumber(theBag.link:match("item:([-%d]+)"))
+								lastErrorTime = time()
+							else
+								if searchText ~= "" then
+									itemName = BankItems_SpecialCharactersLocalization(itemName)
+								end
+								if searchText == "" or strfind(itemName, searchText, 1, true) then
+									count = count + 1
+									if count == 1 then
+										line = line + 1
+										t[line] = L["Contents of:"].." "..gsub(key, "|", L[" of "])
+									end
+									line = line + 1
+									t[line] = format("%s %s", prefix, BankItems_ParseLink(theBag.link))
+								end
+							end
+						end
+						for bagItem = 1, realSize or 0 do -- if realSize is nil skip the loop since table is empty or has an error
+							if theBag[bagItem] and type(theBag[bagItem].link) == "string" then
+								if BankItems_Save.ExportPrefix then
+									-- if bagNum == 100 then
+										-- prefix = "     "..L["Equipped"]..": "
+									-- else
+									if bagNum == 101 then
+										prefix = "     "..MINIMAP_TRACKING_MAILBOX..": "
+									-- elseif bagNum == 102 then
+										-- prefix = "     "..CURRENCY..": "
+									-- elseif bagNum == 104 then
+										-- prefix = "     "..VOID_STORAGE..": "
+									-- elseif bagNum == 105 then
+										-- prefix = "     "..REAGENT_BANK..": "
+									else
+										prefix = "     "..L["Bag %d Item %d:"]:format(bagNum, bagItem).." "
+									end
+								end
+								itemName = BankItems_ParseAndCorrectLink(theBag, bagItem)
+								if itemName == "" then
+									errorflag = true
+									errorCharactersList[key] = key
+									lastErrorItemID = tonumber(theBag[bagItem].link:match("item:([-%d]+)"))
+									lastErrorTime = time()
+								else
+									if searchText ~= "" then
+										itemName = BankItems_SpecialCharactersLocalization(itemName)
+									end
+									if searchText == "" or strfind(itemName, searchText, 1, true) then
+										if (theBag[bagItem].expiry - time()) < 604800 then -- less than 7 days
+											count = count + 1
+											if count == 1 then
+												line = line + 1
+												t[line] = L["Contents of:"].." "..gsub(key, "|", L[" of "])
+											end
+											line = line + 1
+											local expiryTime = SecondsToTime(theBag[bagItem].expiry - time())
+											local expiryString = ""
+											if expiryTime == "" then expiryString = ERR_MAIL_ATTACHMENT_EXPIRED
+											elseif theBag[bagItem].deleted then expiryString = "Deleted in"..": "..expiryTime
+											elseif theBag[bagItem].returned then expiryString = "Returned in"..": "..expiryTime
+											end
+											
+											expiryString = expiryString:gsub("|4Day:", "")
+											expiryString = expiryString:gsub("|4Hr:","")
+											expiryString = expiryString:gsub("|4Min:","")
+											expiryString = expiryString:gsub(";","")
+											
+											t[line] = format("    %d %s - %s", theBag[bagItem].count or 1, BankItems_ParseLink(theBag[bagItem].link), expiryString) 
+										end
+									end
+								end
+							end
+						end
+					end
+				--end
+				if count > 0 then
+					line = line + 1
+					t[line] = ""
+				end
+			end
+		end
+
+		-- if BankItems_Save.Behavior2[5] then	-- Search guild banks too
+			-- for key, bankPlayer in pairs(BankItems_SaveGuild) do
+				-- if lineLimit and line > lineLimit then break end
+				-- local _, realm = strsplit("|", key)
+				-- if type(bankPlayer) == "table" and (BankItems_Save.SearchAllRealms or ((tContains(selfPlayerConRealms, realm) or tContains(selfPlayerConRealms, realmNormalizer[realm]) or realm == selfPlayerRealmName or realm == selfPlayerRealmNormalized) and bankPlayer.faction == selfPlayer.faction)) then
+					-- count = 0
+					-- for tab = 1, MAX_GUILDBANK_TABS do
+						-- if bankPlayer[tab] and bankPlayer[tab].seen then
+							-- -- Tab exists and seen before
+							-- local theBag = bankPlayer[tab]
+							-- for bagItem = 1, 98 do
+								-- if theBag[bagItem] then
+									-- if BankItems_Save.ExportPrefix then
+										-- prefix = "     "..L["Tab %d Item %d:"]:format(tab, bagItem).." "
+									-- end
+									-- itemName = BankItems_ParseAndCorrectLink(theBag, bagItem)
+									-- if itemName == "" then
+										-- errorflag = true
+										-- errorCharactersList[key] = key
+										-- lastErrorItemID = tonumber(theBag[bagItem].link:match("item:([-%d]+)"))
+										-- lastErrorTime = time()
+									-- else
+										-- if searchText ~= "" then
+											-- itemName = BankItems_SpecialCharactersLocalization(itemName)
+										-- end
+										-- if searchText == "" or strfind(itemName, searchText, 1, true) then
+											-- count = count + 1
+											-- if count == 1 then
+												-- line = line + 1
+												-- t[line] = L["Contents of:"].." "..gsub(key, "(.*)|", "<%1>"..L[" of "])
+											-- end
+											-- line = line + 1
+											-- t[line] = format("%s%d %s", prefix, theBag[bagItem].count or 1, BankItems_ParseLink(theBag[bagItem].link))
+										-- end
+									-- end
+								-- end
+							-- end
+						-- end
+					-- end
+				-- end
+			-- end
+		-- end
+	end
+	
+	if line <= lineLimit then
+		line = line + 1
+		t[line] = "\n"..format(L[ [[Mail Call complete.]] ]).."\n"
+	else
+		line = line + 1
+		t[line] = "\n"..format(L[ [[Search for "%s" exceeded the %d line limit. Please try a more specific search term.]] ], searchTextOrg, lineLimit).."\n"
+	end
+	if errorflag then
+		line = line + 1
+		t[line] = L["BANKITEMS_CAUTION_TEXT_2"]
+		for k,v in pairs(errorCharactersList) do
+			line = line + 1
+			t[line] = format("          %s", k)
+		end
+		line = line + 1
+		t[line] = ""
+	end
+	BankItems_DisplayMailCall()
+	BankItems_ExportFrame_ScrollText:SetText(table.concat(t, "\n")) --concatenating too many results at once can freeze the game or throw an error, primarily an issue with searches for empty string which return all items
+	delTable(t)
+	delTable(errorCharactersList)
+	if not errorflag then
+		BankItems_Frame:UnregisterEvent("GET_ITEM_INFO_RECEIVED")
+	--else
+		--print(lastErrorItemID..", "..lastErrorTime)
+	end
+end
+
+function BankItems_DisplayMailCall()
+	BankItems_ExportFrame.mode = "mailcall"
+	BankItems_ExportFrame_ResetButton:Hide()
+	BankItems_ExportFrame_SearchTextbox:Hide()
+	BankItems_ExportFrame_SearchAllRealms:Show()
+	BankItems_ExportFrame_ShowBagPrefix:SetChecked(BankItems_Save.ExportPrefix)
+	BankItems_ExportFrame_GroupData:SetChecked(BankItems_Save.GroupExportData)
+	BankItems_ExportFrame_SearchAllRealms:SetChecked(BankItems_Save.SearchAllRealms)
+	BankItems_ExportFrame_SearchDropDown:Hide()
+	BankItems_ExportFrame_Scroll:SetHeight(300)
+	BankItems_ExportFrame_ScrollText:SetHeight(294)
+	BankItems_ExportFrame:Show()
+end
+
+
 function BankItems_Hook_SendMail(recipient, subject, body)
 	local subCount = 0
 	-- Capitalize the first letter, lower the rest
@@ -6617,6 +7071,7 @@ end
 function OnTooltipSetItem(self, tooltip, data)
     BankItems_AddTooltipData(self, tooltip, data)
 end
+--hooksecurefunc("BattlePetToolTip_Show",OnTooltipSetItem)
 
 function BankItems_AddTooltipData(self, ...)
 	--[[Add tooltip data and return any values passed through ... 
@@ -6625,6 +7080,8 @@ function BankItems_AddTooltipData(self, ...)
 	modify it after tooltip is drawn while still returning any resulting values. Mostly for future proofing
 	in case Blizzard adds return values to more functions.]]
 	if not BankItems_Save.TooltipInfo then return ... end
+
+	--if type(self)=="number" then print(self, tooltip, data) end
 	--or self.BankItemsDone 
 	local _, link = TooltipUtil.GetDisplayedItem(self)
 	local item = link and tonumber(link:match("item:(%d+)"))
@@ -6639,7 +7096,7 @@ function BankItems_AddTooltipData(self, ...)
 			item = link and (tonumber(link:match("item:(%d+)")) or link:match("(currency:%d+)"))
 		end
 	end
-
+	
 	if link and BankItems_Save.TTUnique and self.BankItemsStripLink then --need to strip irrelevant bonusID and instance difficulty data for this item
 		link = gsub(link,"(item:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:[-%d]-:)[-%d]-:[-%d]-([:|])","%1:%2")
 		self.BankItemsStripLink = false
@@ -6674,14 +7131,14 @@ function BankItems_AddTooltipData(self, ...)
 		if quality then 
 			local itemName = GetItemInfo(link)
 			
-			if ProblematicOreIDs[item] then
-				for k, v in pairs(ProblematicOreIDs) do
-					local n, l = GetItemInfo(ProblematicOreIDs[k])
+			if ProblematicItemIDs[item] then
+				for k, v in pairs(ProblematicItemIDs) do
+					local n, l = GetItemInfo(ProblematicItemIDs[k])
 					if n == itemName then
 						qual = GetItemReagentQualityByItemInfo(l)
-						if qual == 1 then q[1] = ProblematicOreIDs[k] end
-						if qual == 2 then q[2] = ProblematicOreIDs[k] end
-						if qual == 3 then q[3] = ProblematicOreIDs[k] end
+						if qual == 1 then q[1] = ProblematicItemIDs[k] end
+						if qual == 2 then q[2] = ProblematicItemIDs[k] end
+						if qual == 3 then q[3] = ProblematicItemIDs[k] end
 					end
 				end
 			else
@@ -7292,6 +7749,7 @@ end
 function BankItems_HookTooltips()
 	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, OnTooltipSetItem)
 	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Currency, OnTooltipSetItem)
+	--TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.BattlePet, OnTooltipSetItem)
 	--TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.Currency, OnTooltipSetItem)
 
 	-- -- Walk through all frames
@@ -7329,7 +7787,18 @@ SlashCmdList["BANKITEMSSEARCH"] = function(msg)
 		BankItems_DisplaySearch()
 	end
 end
+
 SLASH_BANKITEMSSEARCH1 = "/bis"
+
+SlashCmdList["BANKITEMSMAILCALL"] = function(msg)
+	if msg and #msg > 0 then
+		BankItems_SlashHandler("mailcall "..msg)
+	else
+		BankItems_MailCall()
+	end
+end
+SLASH_BANKITEMSMAILCALL1 = "/bimc"
+
 
 -- Makes ESC key close BankItems
 tinsert(UISpecialFrames, "BankItems_Frame")
@@ -8928,10 +9397,10 @@ do
 	end)
 
 	-- Search All Realms checkbox
-	BankItems_ExportFrame_SearchAllRealms = CreateFrame("CheckButton", "BankItems_ExportFrame_SearchAllRealms", BankItems_ExportFrame)
+	BankItems_ExportFrame_SearchAllRealms = CreateFrame("CheckButton", "BankItems_ExportFrame_SearchAllRealms", BankItems_ExportFrame, "UICheckButtonTemplate")
 	BankItems_ExportFrame_SearchAllRealms:SetPoint("TOPLEFT", BankItems_ExportFrame_SearchTextbox, "BOTTOMLEFT", -10, 3)
 	BankItems_ExportFrame_SearchAllRealms:SetHitRectInsets(0, -60, 0, 0)
-	BankItems_ExportFrame_SearchAllRealms:SetText("All Realms")
+	BankItems_ExportFrame_SearchAllRealmsText:SetText("All Realms")
 	BankItems_ExportFrame_SearchAllRealms:SetScript("OnClick", function(self)
 		if BankItems_Save.SearchAllRealms then
 			BankItems_Save.SearchAllRealms = false

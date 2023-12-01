@@ -303,6 +303,7 @@ local BankItems_OptionsFrame_BagParent
 local BankItems_OptionsFrame_VoidBag
 local BankItems_OptionsFrame_ReagentBag
 local BankItems_OptionsFrame_TooltipInfo
+local BankItems_OptionsFrame_LoginMailCall
 local BankItems_GTTDropDown
 --local BankItems_OptionsFrame_TTSoulbound --option no longer used
 local BankItems_OptionsFrame_TTUnique
@@ -989,6 +990,7 @@ function BankItems_Frame_OnEvent(self, event, ...)
 		BankItems_SaveZone()
 		BankItems_SaveFaction()
 		BankItems_Generate_SelfItemCache()
+		if BankItems_Save.LoginMailCall and (arg1 or arg2) then BankItems_MailCall() end
 	elseif event == "PLAYERBANKSLOTS_CHANGED" or event == "PLAYERBANKBAGSLOTS_CHANGED" then --fires even when bank is closed
 		--"PLAYERBANKSLOTS_CHANGED" will fire when one of the main bank slots changes, an equipped bank bag is changed, or the combination of items in an equipped bank bag changes (permutation doesn't matter)
 		if not isBankOpen then
@@ -6132,27 +6134,9 @@ function BankItems_MailCall()
 	local errorCharactersList = newTable()
 
 	lastErrorSearch = searchText
-	-- if searchText ~= "" then
-		-- BankItems_Frame:RegisterEvent("GET_ITEM_INFO_RECEIVED")
-		-- searchText = BankItems_SpecialCharactersLocalization(searchText)
-	-- end
 	
 	lastErrorItemID = 0
 	lastErrorTime = time()
-
-	-- Search filter setup
-	-- local searchFilter = newTable()
-	-- for i = 0, 5 do
-		-- searchFilter[i] = BankItems_Save.Behavior2[2]
-	-- end
-	-- for i = 6, 12 do
-		-- searchFilter[i] = BankItems_Save.Behavior2[1]
-	-- end
-	-- searchFilter[100] = BankItems_Save.Behavior2[3]
-	-- searchFilter[101] = BankItems_Save.Behavior2[4]
-	-- searchFilter[102] = BankItems_Save.Behavior2[2]
-	-- searchFilter[104] = BankItems_Save.Behavior2[1] -- consider void storage a bank bag for filtering purposes
-	-- searchFilter[105] = BankItems_Save.Behavior2[1] -- consider Reagent Bank a bank bag for filtering purposes
 
 	if BankItems_Save.GroupExportData then
 		-- Group similar items together in the report
@@ -6161,40 +6145,12 @@ function BankItems_MailCall()
 		for key, bankPlayer in pairs(BankItems_Save) do
 			local _, realm = strsplit("|", key)
 			if type(bankPlayer) == "table" and (BankItems_Save.SearchAllRealms or ((tContains(selfPlayerConRealms, realm) or tContains(selfPlayerConRealms, realmNormalizer[realm]) or realm == selfPlayerRealmName or realm == selfPlayerRealmNormalized) and bankPlayer.faction == selfPlayer.faction)) and key ~= "Behavior" and key ~= "Behavior2" then
-				-- if BankItems_Save.Behavior2[1] then
-					-- for num = 1, NUM_BANKGENERIC_SLOTS do
-						-- if bankPlayer[num] then
-							-- itemName = BankItems_ParseAndCorrectLink(bankPlayer, num)
-							-- if itemName == "" then
-								-- errorflag = true
-								-- errorCharactersList[key] = key
-								-- lastErrorItemID = tonumber(bankPlayer[num].link:match("item:([-%d]+)"))
-								-- lastErrorTime = time()
-							-- else
-								-- if searchText ~= "" then
-									-- templocalized = BankItems_SpecialCharactersLocalization(itemName)
-								-- end
-								-- if searchText == "" or strfind(templocalized, searchText, 1, true) then
-									-- data[itemName] = data[itemName] or newTable()
-									-- data[itemName][key] = data[itemName][key] or newTable()
-									-- data[itemName][key].count = (data[itemName][key].count or 0) + (bankPlayer[num].count or 1)
-									-- data[itemName][key].bank = (data[itemName][key].bank or 0) + (bankPlayer[num].count or 1)
-								-- end
-							-- end
-						-- end
-					-- end
-				-- end
-				--for _, bagNum in ipairs(BAGNUMBERS) do
 				local bagNum = 101
 					local theBag = bankPlayer[format("Bag%d", bagNum)]
 					if theBag then
 						local realSize = theBag.size or 0
 						if bagNum == 101 then
 							realSize = #theBag
-						-- elseif bagNum == 102 then
-							-- realSize = #theBag
-						-- elseif bagNum == 104 or bagNum == 105 then
-							-- realSize = theBag.realSize or #theBag
 						end
 						if type(theBag.link) == "string" then
 							itemName = BankItems_ParseAndCorrectLink(theBag)
@@ -6231,21 +6187,8 @@ function BankItems_MailCall()
 										data[itemName] = data[itemName] or newTable()
 										data[itemName][key] = data[itemName][key] or newTable()
 										data[itemName][key].count = (data[itemName][key].count or 0) + (theBag[bagItem].count or 1)
-										-- if bagNum >= BACKPACK_CONTAINER and bagNum <= NUM_TOTAL_EQUIPPED_BAG_SLOTS then
-											-- data[itemName][key].inv = (data[itemName][key].inv or 0) + (theBag[bagItem].count or 1)
-										-- elseif bagNum == 100 then
-											-- data[itemName][key].equipped = (data[itemName][key].equipped or 0) + (theBag[bagItem].count or 1)
-										-- elseif bagNum == 102 then
-											-- data[itemName][key].currency = (data[itemName][key].currency or 0) + (theBag[bagItem].count or 1)
-										--else
 										if bagNum == 101 then
 											data[itemName][key].mail = (data[itemName][key].mail or 0) + (theBag[bagItem].count or 1)
-										-- elseif bagNum == 104 then
-											-- data[itemName][key].voidstorage = (data[itemName][key].voidstorage or 0) + (theBag[bagItem].count or 1)
-										-- elseif bagNum == 105 then
-											-- data[itemName][key].reagentbank = (data[itemName][key].reagentbank or 0) + (theBag[bagItem].count or 1)
-										-- else
-											-- data[itemName][key].bank = (data[itemName][key].bank or 0) + (theBag[bagItem].count or 1)
 										end
 									end
 								end
@@ -6255,41 +6198,6 @@ function BankItems_MailCall()
 				--end
 			end
 		end
-
-		-- if BankItems_Save.Behavior2[5] then	-- Search guild banks too
-			-- for key, bankPlayer in pairs(BankItems_SaveGuild) do
-				-- local _, realm = strsplit("|", key)
-				-- if type(bankPlayer) == "table" and (BankItems_Save.SearchAllRealms or ((tContains(selfPlayerConRealms, realm) or tContains(selfPlayerConRealms, realmNormalizer[realm]) or realm == selfPlayerRealmName or realm == selfPlayerRealmNormalized) and bankPlayer.faction == selfPlayer.faction)) then
-					-- for tab = 1, MAX_GUILDBANK_TABS do
-						-- if bankPlayer[tab] and bankPlayer[tab].seen then
-							-- -- Tab exists and seen before
-							-- local theBag = bankPlayer[tab]
-							-- for bagItem = 1, 98 do
-								-- if theBag[bagItem] then
-									-- itemName = BankItems_ParseAndCorrectLink(theBag, bagItem)
-									-- if itemName == "" then
-										-- errorflag = true
-										-- errorCharactersList[key] = key
-										-- lastErrorItemID = tonumber(theBag[bagItem].link:match("item:([-%d]+)"))
-										-- lastErrorTime = time()
-									-- else
-										-- if searchText ~= "" then
-											-- templocalized = BankItems_SpecialCharactersLocalization(itemName)
-										-- end
-										-- if searchText == "" or strfind(templocalized, searchText, 1, true) then
-											-- data[itemName] = data[itemName] or newTable()
-											-- data[itemName][key] = data[itemName][key] or newTable()
-											-- data[itemName][key].count = (data[itemName][key].count or 0) + (theBag[bagItem].count or 1)
-											-- data[itemName][key].gbank = (data[itemName][key].gbank or 0) + (theBag[bagItem].count or 1)
-										-- end
-									-- end
-								-- end
-							-- end
-						-- end
-					-- end
-				-- end
-			-- end
-		-- end
 
 		local baginfos = {
 			{ L["Bank"] },
@@ -6350,45 +6258,13 @@ function BankItems_MailCall()
 			local _, realm = strsplit("|", key)
 			if type(bankPlayer) == "table" and (BankItems_Save.SearchAllRealms or ((tContains(selfPlayerConRealms, realm) or tContains(selfPlayerConRealms, realmNormalizer[realm]) or realm == selfPlayerRealmName or realm == selfPlayerRealmNormalized) and bankPlayer.faction == selfPlayer.faction)) and key ~= "Behavior" and key ~= "Behavior2" then
 				count = 0
-				-- if BankItems_Save.Behavior2[1] then
-					-- for num = 1, NUM_BANKGENERIC_SLOTS do
-						-- if bankPlayer[num] then
-							-- if BankItems_Save.ExportPrefix then
-								-- prefix = "     "..L["Bank Item %d:"]:format(num).." "
-							-- end
-							-- itemName = BankItems_ParseAndCorrectLink(bankPlayer, num)
-							-- if itemName == "" then
-								-- errorflag = true
-								-- errorCharactersList[key] = key
-								-- lastErrorItemID = tonumber(bankPlayer[num].link:match("item:([-%d]+)"))
-								-- lastErrorTime = time()
-							-- else
-								-- if searchText ~= "" then
-									-- itemName = BankItems_SpecialCharactersLocalization(itemName)
-								-- end
-								
-								-- if searchText == "" or strfind(itemName, searchText, 1, true) then
-									-- count = count + 1
-									-- if count == 1 then
-										-- line = line + 1
-										-- t[line] = L["Contents of:"].." "..gsub(key, "|", L[" of "])
-									-- end
-									-- line = line + 1
-									-- t[line] = format("%s%d %s", prefix, bankPlayer[num].count or 1, BankItems_ParseLink(bankPlayer[num].link))
-								-- end
-							-- end
-						-- end
-					-- end
-				-- end
-				-- for _, bagNum in ipairs(BAGNUMBERS) do
+
 				local bagNum = 101
 					local theBag = bankPlayer[format("Bag%d", bagNum)]
 					if theBag then
 						local realSize = theBag.size or 0
 						if bagNum == 101 or bagNum == 102 then
 							realSize = #theBag
-						-- elseif bagNum == 104 or bagNum == 105 then
-							-- realSize = theBag.realSize or #theBag
 						end
 						if type(theBag.link) == "string" then
 							prefix = "     "..L["Bag %d:"]:format(bagNum)
@@ -6416,17 +6292,8 @@ function BankItems_MailCall()
 						for bagItem = 1, realSize or 0 do -- if realSize is nil skip the loop since table is empty or has an error
 							if theBag[bagItem] and type(theBag[bagItem].link) == "string" then
 								if BankItems_Save.ExportPrefix then
-									-- if bagNum == 100 then
-										-- prefix = "     "..L["Equipped"]..": "
-									-- else
 									if bagNum == 101 then
 										prefix = "     "..MINIMAP_TRACKING_MAILBOX..": "
-									-- elseif bagNum == 102 then
-										-- prefix = "     "..CURRENCY..": "
-									-- elseif bagNum == 104 then
-										-- prefix = "     "..VOID_STORAGE..": "
-									-- elseif bagNum == 105 then
-										-- prefix = "     "..REAGENT_BANK..": "
 									else
 										prefix = "     "..L["Bag %d Item %d:"]:format(bagNum, bagItem).." "
 									end
@@ -6476,48 +6343,12 @@ function BankItems_MailCall()
 			end
 		end
 
-		-- if BankItems_Save.Behavior2[5] then	-- Search guild banks too
-			-- for key, bankPlayer in pairs(BankItems_SaveGuild) do
-				-- if lineLimit and line > lineLimit then break end
-				-- local _, realm = strsplit("|", key)
-				-- if type(bankPlayer) == "table" and (BankItems_Save.SearchAllRealms or ((tContains(selfPlayerConRealms, realm) or tContains(selfPlayerConRealms, realmNormalizer[realm]) or realm == selfPlayerRealmName or realm == selfPlayerRealmNormalized) and bankPlayer.faction == selfPlayer.faction)) then
-					-- count = 0
-					-- for tab = 1, MAX_GUILDBANK_TABS do
-						-- if bankPlayer[tab] and bankPlayer[tab].seen then
-							-- -- Tab exists and seen before
-							-- local theBag = bankPlayer[tab]
-							-- for bagItem = 1, 98 do
-								-- if theBag[bagItem] then
-									-- if BankItems_Save.ExportPrefix then
-										-- prefix = "     "..L["Tab %d Item %d:"]:format(tab, bagItem).." "
-									-- end
-									-- itemName = BankItems_ParseAndCorrectLink(theBag, bagItem)
-									-- if itemName == "" then
-										-- errorflag = true
-										-- errorCharactersList[key] = key
-										-- lastErrorItemID = tonumber(theBag[bagItem].link:match("item:([-%d]+)"))
-										-- lastErrorTime = time()
-									-- else
-										-- if searchText ~= "" then
-											-- itemName = BankItems_SpecialCharactersLocalization(itemName)
-										-- end
-										-- if searchText == "" or strfind(itemName, searchText, 1, true) then
-											-- count = count + 1
-											-- if count == 1 then
-												-- line = line + 1
-												-- t[line] = L["Contents of:"].." "..gsub(key, "(.*)|", "<%1>"..L[" of "])
-											-- end
-											-- line = line + 1
-											-- t[line] = format("%s%d %s", prefix, theBag[bagItem].count or 1, BankItems_ParseLink(theBag[bagItem].link))
-										-- end
-									-- end
-								-- end
-							-- end
-						-- end
-					-- end
-				-- end
-			-- end
-		-- end
+
+	end
+		
+	if line == 0 then 
+		print("\124cff00ccffBank Items:\124r Mail Call found no expiring mail.")
+		return 
 	end
 	
 	if line <= lineLimit then
@@ -7110,6 +6941,7 @@ function BankItems_AddTooltipData(self, ...)
 	end
 	local item = BankItems_createUniqueItem(link) or item
 	if not strfind(item, "currency", 1, true) and strfind(item, ":", 1, true) then _, item = strsplit(":", item) end
+	
 	if not BankItems_TooltipCache[item] then
 		BankItems_TooltipCache[item] = newTable()
 
@@ -7147,7 +6979,7 @@ function BankItems_AddTooltipData(self, ...)
 		end
 
 		-- CURRENT CHARACTER
-		if BankItems_SelfCache[item] then
+		if BankItems_SelfCache[item] or BankItems_SelfCache[q[1]] or BankItems_SelfCache[q[2]] or BankItems_SelfCache[q[3]] then
 			if quality then --has a quality, should be some kind of crafting reagent, get qualities 1-3
 				local text
 				local counttable1, counttable2, counttable3 = BankItems_SelfCache[q[1]], BankItems_SelfCache[q[2]], BankItems_SelfCache[q[3]]
@@ -8584,7 +8416,7 @@ do
 
 	-- Minimap Button checkbox
 	BankItems_OptionsFrame_MinimapButton = CreateFrame("CheckButton", "BankItems_OptionsFrame_MinimapButton", BankItems_OptionsFrame, "InterfaceOptionsCheckButtonTemplate")
-	BankItems_OptionsFrame_MinimapButton:SetPoint("TOPLEFT",BankItems_OptionsFrame_LockWindow,"TOPLEFT", 0, -28)
+	BankItems_OptionsFrame_MinimapButton:SetPoint("TOPLEFT",BankItems_OptionsFrame_LockWindow,"TOPLEFT", 0, -24)
 	BankItems_OptionsFrame_MinimapButtonText:SetText(L["Show the minimap button"])
 	BankItems_OptionsFrame_MinimapButton:SetHitRectInsets(0, -1 * BankItems_OptionsFrame_MinimapButtonText:GetWidth(), 0, 0)
 	BankItems_OptionsFrame_MinimapButton:SetScript("OnClick", function(self)
@@ -8600,7 +8432,7 @@ do
 
 	-- Window Style checkbox
 	BankItems_OptionsFrame_WindowStyle = CreateFrame("CheckButton", "BankItems_OptionsFrame_WindowStyle", BankItems_OptionsFrame, "InterfaceOptionsCheckButtonTemplate")
-	BankItems_OptionsFrame_WindowStyle:SetPoint("TOPLEFT",BankItems_OptionsFrame_MinimapButton,"TOPLEFT", 0, -28)
+	BankItems_OptionsFrame_WindowStyle:SetPoint("TOPLEFT",BankItems_OptionsFrame_MinimapButton,"TOPLEFT", 0, -24)
 	BankItems_OptionsFrame_WindowStyleText:SetText(L["Open BankItems with Blizzard windows"])
 	BankItems_OptionsFrame_WindowStyle:SetHitRectInsets(0, -1 * BankItems_OptionsFrame_WindowStyleText:GetWidth(), 0, 0)
 	BankItems_OptionsFrame_WindowStyle:SetScript("OnClick", function(self)
@@ -8624,7 +8456,7 @@ do
 
 	-- Bag Parent checkbox
 	BankItems_OptionsFrame_BagParent = CreateFrame("CheckButton", "BankItems_OptionsFrame_BagParent", BankItems_OptionsFrame, "InterfaceOptionsCheckButtonTemplate")
-	BankItems_OptionsFrame_BagParent:SetPoint("TOPLEFT",BankItems_OptionsFrame_WindowStyle,"TOPLEFT", 0, -28)
+	BankItems_OptionsFrame_BagParent:SetPoint("TOPLEFT",BankItems_OptionsFrame_WindowStyle,"TOPLEFT", 0, -24)
 	BankItems_OptionsFrame_BagParentText:SetText(L["Open BankItems bags with Blizzard bags"])
 	BankItems_OptionsFrame_BagParent:SetHitRectInsets(0, -1 * BankItems_OptionsFrame_BagParentText:GetWidth(), 0, 0)
 	BankItems_OptionsFrame_BagParent:SetScript("OnClick", function(self)
@@ -8649,7 +8481,7 @@ do
 
 	-- Option to restore showing Void Storage as a bag
 	BankItems_OptionsFrame_VoidBag = CreateFrame("CheckButton", "BankItems_OptionsFrame_VoidBag", BankItems_OptionsFrame, "InterfaceOptionsCheckButtonTemplate")
-	BankItems_OptionsFrame_VoidBag:SetPoint("TOPLEFT",BankItems_OptionsFrame_BagParent,"TOPLEFT", 0, -28)
+	BankItems_OptionsFrame_VoidBag:SetPoint("TOPLEFT",BankItems_OptionsFrame_BagParent,"TOPLEFT", 0, -24)
 	BankItems_OptionsFrame_VoidBagText:SetText(L["Show void storage contents in a bag"])
 	BankItems_OptionsFrame_VoidBag:SetHitRectInsets(0, -1 * BankItems_OptionsFrame_VoidBagText:GetWidth(), 0, 0)
 	BankItems_OptionsFrame_VoidBag:SetScript("OnClick", function(self)
@@ -8673,7 +8505,7 @@ do
 
 	-- Option to restore showing the Reagent Bank as a bag
 	BankItems_OptionsFrame_ReagentBag = CreateFrame("CheckButton", "BankItems_OptionsFrame_ReagentBag", BankItems_OptionsFrame, "InterfaceOptionsCheckButtonTemplate")
-	BankItems_OptionsFrame_ReagentBag:SetPoint("TOPLEFT",BankItems_OptionsFrame_VoidBag,"TOPLEFT", 0, -28)
+	BankItems_OptionsFrame_ReagentBag:SetPoint("TOPLEFT",BankItems_OptionsFrame_VoidBag,"TOPLEFT", 0, -24)
 	BankItems_OptionsFrame_ReagentBagText:SetText(L["Show reagent bank contents in a bag"])
 	BankItems_OptionsFrame_ReagentBag:SetHitRectInsets(0, -1 * BankItems_OptionsFrame_ReagentBagText:GetWidth(), 0, 0)
 	BankItems_OptionsFrame_ReagentBag:SetScript("OnClick", function(self)
@@ -8697,7 +8529,7 @@ do
 
 	-- Add Tooltip Info checkbox
 	BankItems_OptionsFrame_TooltipInfo = CreateFrame("CheckButton", "BankItems_OptionsFrame_TooltipInfo", BankItems_OptionsFrame, "InterfaceOptionsCheckButtonTemplate")
-	BankItems_OptionsFrame_TooltipInfo:SetPoint("TOPLEFT",BankItems_OptionsFrame_ReagentBag,"TOPLEFT", 0, -28)
+	BankItems_OptionsFrame_TooltipInfo:SetPoint("TOPLEFT",BankItems_OptionsFrame_ReagentBag,"TOPLEFT", 0, -24)
 	BankItems_OptionsFrame_TooltipInfoText:SetText(L["Show extra item tooltip information"])
 	BankItems_OptionsFrame_TooltipInfo:SetHitRectInsets(0, -1 * BankItems_OptionsFrame_TooltipInfoText:GetWidth(), 0, 0)
 	BankItems_OptionsFrame_TooltipInfo:SetScript("OnClick", function(self)
@@ -8738,7 +8570,7 @@ do
 	
 	-- Save unique versions of items to tooltip count caches
 	BankItems_OptionsFrame_TTUnique = CreateFrame("CheckButton", "BankItems_OptionsFrame_TTUnique", BankItems_OptionsFrame, "InterfaceOptionsCheckButtonTemplate")
-	BankItems_OptionsFrame_TTUnique:SetPoint("TOPLEFT",BankItems_OptionsFrame_TooltipInfo,"TOPLEFT", 0, -28)
+	BankItems_OptionsFrame_TTUnique:SetPoint("TOPLEFT",BankItems_OptionsFrame_TooltipInfo,"TOPLEFT", 0, -24)
 	BankItems_OptionsFrame_TTUniqueText:SetText(L["Show only exact item matches in tooltip counts"])
 	BankItems_OptionsFrame_TTUnique:SetHitRectInsets(0, -1 * BankItems_OptionsFrame_TTUniqueText:GetWidth(), 0, 0)
 	BankItems_OptionsFrame_TTUnique:SetScript("OnClick", function(self)
@@ -8753,9 +8585,22 @@ do
 		end
 	end)
 	
+	BankItems_OptionsFrame_LoginMailCall = CreateFrame("CheckButton", "BankItems_OptionsFrame_LoginMailCall", BankItems_OptionsFrame, "InterfaceOptionsCheckButtonTemplate")
+	BankItems_OptionsFrame_LoginMailCall:SetPoint("TOPLEFT",BankItems_OptionsFrame_TTUnique,"TOPLEFT", 0, -24)
+	BankItems_OptionsFrame_LoginMailCallText:SetText(L["Show Mail Call on Login"])
+	BankItems_OptionsFrame_LoginMailCall:SetHitRectInsets(0, -1 * BankItems_OptionsFrame_LoginMailCallText:GetWidth(), 0, 0)
+	BankItems_OptionsFrame_LoginMailCall:SetScript("OnClick", function(self)
+		if BankItems_Save.LoginMailCall then
+			BankItems_Save.LoginMailCall = false
+		else
+			BankItems_Save.LoginMailCall = true
+		end
+		self:SetChecked(BankItems_Save.LoginMailCall)
+	end)
+	
 	-- Sort LDB Tooltip checkbox
 	BankItems_OptionsFrame_SortLDBTooltip = CreateFrame("CheckButton", "BankItems_OptionsFrame_SortLDBTooltip", BankItems_OptionsFrame, "InterfaceOptionsCheckButtonTemplate")
-	BankItems_OptionsFrame_SortLDBTooltip:SetPoint("TOPLEFT",BankItems_OptionsFrame_TTUnique,"TOPLEFT", 0, -28)
+	BankItems_OptionsFrame_SortLDBTooltip:SetPoint("TOPLEFT",BankItems_OptionsFrame_LoginMailCall,"TOPLEFT", 0, -24)
 	BankItems_OptionsFrame_SortLDBTooltipText:SetText(L["Sort data broker gold tooltip in ascending order"])
 	BankItems_OptionsFrame_SortLDBTooltip:SetHitRectInsets(0, -1 * BankItems_OptionsFrame_SortLDBTooltipText:GetWidth(), 0, 0)
 	BankItems_OptionsFrame_SortLDBTooltip:SetScript("OnClick", function(self)
@@ -8780,7 +8625,7 @@ do
 	
 	-- Add Money Tooltip checkbox
 	BankItems_OptionsFrame_MoneyTooltip = CreateFrame("CheckButton", "BankItems_OptionsFrame_MoneyTooltip", BankItems_OptionsFrame, "InterfaceOptionsCheckButtonTemplate")
-	BankItems_OptionsFrame_MoneyTooltip:SetPoint("TOPLEFT",BankItems_OptionsFrame_SortLDBTooltip,"TOPLEFT", 0, -28)
+	BankItems_OptionsFrame_MoneyTooltip:SetPoint("TOPLEFT",BankItems_OptionsFrame_SortLDBTooltip,"TOPLEFT", 0, -24)
 	BankItems_OptionsFrame_MoneyTooltipText:SetText(L["Show character gold in total gold tooltip"])
 	BankItems_OptionsFrame_MoneyTooltip:SetHitRectInsets(0, -1 * BankItems_OptionsFrame_MoneyTooltipText:GetWidth(), 0, 0)
 	BankItems_OptionsFrame_MoneyTooltip:SetScript("OnClick", function(self)
@@ -9016,7 +8861,9 @@ function BankItems_Options_Init(self, event)
 	if BankItems_Save.MoneyLimit == nil then
 		BankItems_Save.MoneyLimit = 50
 	end
-	
+		if BankItems_Save.LoginMailCall == nil then
+		BankItems_Save.LoginMailCall = false
+	end
 
 	-- Apply saved settings
 	if BankItems_Save.LockWindow then
@@ -9253,6 +9100,8 @@ function BankItems_Options_OnShow()
 	BankItems_OptionsFrame_MoneyTooltip:SetChecked(BankItems_Save.MoneyTooltip)
 	BankItems_OptionsFrame_SortMoneyTooltip:SetChecked(BankItems_Save.SortMoneyTooltip)
 	BankItems_MoneyTooltipLimitSlider:SetValue(BankItems_Save.MoneyLimit)
+	BankItems_OptionsFrame_LoginMailCall:SetChecked(BankItems_Save.LoginMailCall)
+
 	if BankItems_Save.MoneyTooltip then
 		BankItems_OptionsFrame_SortMoneyTooltip:Enable()
 		BankItems_MoneyTooltipLimitSlider:Enable()

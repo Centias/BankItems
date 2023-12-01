@@ -8861,7 +8861,9 @@ function BankItems_Options_Init(self, event)
 	if BankItems_Save.MoneyLimit == nil then
 		BankItems_Save.MoneyLimit = 50
 	end
-	
+		if BankItems_Save.LoginMailCall == nil then
+		BankItems_Save.LoginMailCall = false
+	end
 
 	-- Apply saved settings
 	if BankItems_Save.LockWindow then

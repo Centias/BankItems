@@ -1,4 +1,9 @@
 ------------------------------------------------------------------------
+10.0.3.0 | Centias | 2023-12-01 01:36:33
+
+Update: Added option to run Mail Call on login
+	Fixed crafting window tooltips when the current character is missing rank/quality 1 of a reagent
+------------------------------------------------------------------------
 10.0.3.0 | Centias | 2023-11-27 18:41:00
 
 Update: Added Mail Call feature: use /bimc to see any mail that will expire in less than a week.
@@ -17,4 +22,3 @@ Update: Fixed Draconium and Serevite Ore not showing all ranks in the tooltip be
 
 Update: Reworked tooltips for reagents with different qualities to include breakdowns and totals for all qualities.
 ------------------------------------------------------------------------
-

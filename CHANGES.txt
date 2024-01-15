@@ -1,4 +1,8 @@
 ------------------------------------------------------------------------
+10.0.3.2 | Centias | 2024-01-14 23:57:46
+
+Update: Added Resilient Leather and Howling Rune to problematic item IDs
+------------------------------------------------------------------------
 10.0.3.0 | Centias | 2023-12-01 01:36:33
 
 Update: Added option to run Mail Call on login

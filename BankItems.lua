@@ -263,9 +263,10 @@ local TooltipList = {
 local ProblematicItemIDs = {
 	[189143] = 189143, [188658] = 188658, [190311] = 190311, --Draconium Ore
 	[190395] = 190395, [190396] = 190396, [190394] = 190394, --Serevite Ore 
-	[192852] = 192852, [192853] = 192853, [192855] = 192855,  --Alexstraszite
-	[192862] = 192862, [192863] = 192863, [192865] = 192865,  --Alexstraszite
-
+	[192852] = 192852, [192853] = 192853, [192855] = 192855, --Alexstraszite
+	[192862] = 192862, [192863] = 192863, [192865] = 192865, --Neltharite
+	[193208] = 193208, [193210] = 193210, [193211] = 193211, --Resilient Leather
+	[194817] = 194817, [194819] = 194819, [194820] = 194820  --Howling Rune
 }
 
 -- Localize more frames to see if it fixes the Lua interpreter errors on macs

@@ -212,7 +212,7 @@ local GetGuildBankTabInfo, GetGuildBankItemInfo, GetGuildBankItemLink = GetGuild
 local GetInboxHeaderInfo, GetInboxItem, GetInboxItemLink = GetInboxHeaderInfo, GetInboxItem, GetInboxItemLink
 local GetMerchantItemCostItem = GetMerchantItemCostItem
 local GetItemReagentQualityByItemInfo, GetRecipeItemLink, GetRecipeFixedReagentItemLink, GetQuestLogItemLink, GetQuestItemLink = C_TradeSkillUI.GetItemReagentQualityByItemInfo, C_TradeSkillUI.GetRecipeItemLink, C_TradeSkillUI.GetRecipeFixedReagentItemLink, GetQuestLogItemLink, GetQuestItemLink
-local GetItemIcon, GetItemInfo, GetItemCount = GetItemIcon, GetItemInfo, GetItemCount
+local GetItemIcon, GetItemIconByID, GetItemInfo, GetItemCount = C_Item.GetItemIcon, C_Item.GetItemIconByID, C_Item.GetItemInfo, C_Item.GetItemCount
 local GetPetInfoBySpeciesID = C_PetJournal.GetPetInfoBySpeciesID
 local ShowInspectCursor, ResetCursor, GetMouseFocus, IsControlKeyDown = ShowInspectCursor, ResetCursor, GetMouseFocus, IsControlKeyDown
 
@@ -713,7 +713,7 @@ function BankItems_Bag_OnClick(self, button)
 		else
 			_G[name.."Name"]:SetText(BankItems_ParseLink(theBag.link))
 		end
-		_G[name.."Portrait"]:SetTexture(GetItemIcon(theBag.link) or theBag.icon)
+		_G[name.."Portrait"]:SetTexture(theBag.icon or GetItemIconByID(theBag.link))
 	
 		BankItems_PopulateBag(bagID)
 		bagFrame:ClearAllPoints()
@@ -4711,10 +4711,10 @@ function BankItems_PopulateFrame()
 				local speciesID, breedQuality = strmatch(bankPlayer[i].link, "battlepet:([-%d]-):[-%d]-:([-%d]-):")
 				local _, peticon = GetPetInfoBySpeciesID(tonumber(speciesID) or 0) --set species 0 if battlepet link wasn't valid
 				quality = tonumber(breedQuality) or select(3, GetItemInfo(82800)) --if quality isn't valid set caged pet quality
-				ItemButtonAr[i].icon:SetTexture(peticon or GetItemIcon(82800)) --if peticon isn't returned set caged pet item texture
+				ItemButtonAr[i].icon:SetTexture(peticon or GetItemIconByID(82800)) --if peticon isn't returned set caged pet item texture
 			else
 				_, _, quality, _, _, _, _, _, _, icon = GetItemInfo(bankPlayer[i].link)
-				ItemButtonAr[i].icon:SetTexture(icon or GetItemIcon(bankPlayer[i].link))
+				ItemButtonAr[i].icon:SetTexture(icon or GetItemIconByID(bankPlayer[i].link))
 				--if not icon then print(bankPlayer[i].link, GetItemInfo(bankPlayer[i].link)) end
 			end
 			if quality and (quality >= LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
@@ -4754,7 +4754,7 @@ function BankItems_PopulateFrame()
 				BagButtonAr[0].icon:SetTexture("Interface\\Buttons\\Button-Backpack-Up")
 				BagButtonAr[0].icon:SetVertexColor(1, 1, 1)
 			elseif bankPlayer[format("Bag%d", i)] and bankPlayer[format("Bag%d", i)].link then
-				BagButtonAr[i].icon:SetTexture(GetItemIcon(bankPlayer[format("Bag%d", i)].link))
+				BagButtonAr[i].icon:SetTexture(C_Item.GetItemIconByID(bankPlayer[format("Bag%d", i)].link)) 
 				BagButtonAr[i].icon:SetVertexColor(1, 1, 1)
 			else
 				BagButtonAr[i].icon:SetTexture("Interface\\PaperDoll\\UI-PaperDoll-Slot-Bag")
@@ -4891,10 +4891,10 @@ function BankItems_PopulateBag(bagID)
 						local speciesID, breedQuality = strmatch(link, "battlepet:([-%d]-):[-%d]-:([-%d]-):")
 						local _, peticon = GetPetInfoBySpeciesID(tonumber(speciesID) or 0) --set species 0 if battlepet link wasn't valid
 						quality = tonumber(breedQuality) or select(3, GetItemInfo(82800)) --if quality isn't valid set caged pet quality
-						button.icon:SetTexture(peticon or GetItemIcon(82800)) --if peticon isn't returned set caged pet item texture
+						button.icon:SetTexture(peticon or GetItemIconByID(82800)) --if peticon isn't returned set caged pet item texture
 					else
 						_, _, quality, _, _, _, _, _, _, icon = GetItemInfo(link)
-						button.icon:SetTexture(icon or GetItemIcon(link))
+						button.icon:SetTexture(icon or GetItemIconByID(link))
 						--if not icon then print(link, GetItemInfo(link)) end
 					end
 					if quality and (quality >= LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
@@ -7869,7 +7869,7 @@ function BankItems_PopulateGuildBank(guildName, tab)
 						icon = icon or GetItemIcon(82800) --if peticon isn't returned set caged pet item texture
 					else
 						_, _, quality, _, _, _, _, _, _, icon = GetItemInfo(selfGuild[tab][i].link)
-						icon = icon or GetItemIcon(selfGuild[tab][i].link)
+						icon = icon or GetItemIconByID(selfGuild[tab][i].link)
 						--if not icon then print(selfGuild[tab][i].link, GetItemInfo(selfGuild[tab][i].link)) end
 					end
 					if quality and (quality >= LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then
@@ -8168,7 +8168,7 @@ function BankItems_PopulateReagentBank()
 					RBButtonAr[i].IconBorder:Hide()
 				end
 				--if not icon then print(bankPlayer.Bag105[i].link, GetItemInfo(bankPlayer.Bag105[i].link)) end
-				RBButtonAr[i].icon:SetTexture(icon or GetItemIcon(bankPlayer.Bag105[i].link))
+				RBButtonAr[i].icon:SetTexture(icon or GetItemIconByID(bankPlayer.Bag105[i].link))
 				if bankPlayer.Bag105[i].count then
 					RBButtonAr[i].Count:Show()
 					RBButtonAr[i].Count:SetText(bankPlayer.Bag105[i].count)
@@ -8248,7 +8248,7 @@ function BankItems_PopulateVoidStorage(tab)
 					VoidButtonAr[i].IconBorder:Hide()
 				end
 				--if not icon then print(bankPlayer.Bag104[i+slotOffset].link, GetItemInfo(bankPlayer.Bag104[i+slotOffset].link)) end
-				VoidButtonAr[i].icon:SetTexture(icon or GetItemIcon(bankPlayer.Bag104[i+slotOffset].link))
+				VoidButtonAr[i].icon:SetTexture(icon or GetItemIconByID(bankPlayer.Bag104[i+slotOffset].link))
 				if bankPlayer.Bag104[i+slotOffset].count then
 					VoidButtonAr[i].Count:Show()
 					VoidButtonAr[i].Count:SetText(bankPlayer.Bag104[i+slotOffset].count)

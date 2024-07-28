@@ -1,4 +1,8 @@
 ------------------------------------------------------------------------
+11.0.0.1 | Centias | 2024-07-28 02:06:38
+
+Update: Fixes for TWW pre-patch and most of the work for getting Warband Storage working with existing functions
+------------------------------------------------------------------------
 10.0.3.3 | Centias | 2024-01-14 18:32:31
 
 Update: Updated GetItemIcon to work with 10.2.6 changes to C_Item namespace

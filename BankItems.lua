@@ -4688,7 +4688,7 @@ function bankStackReduction(tab, reduction)
 			if sortTab[i] == tab[j] then
 				sortTab[i] = tab[j] - reduction
 				if sortTab[i] < 0 then
-					print(i, j, reduction)
+					--print(i, j, reduction)
 					reduction = reduction - tab[j]
 					tab[j] = 0
 				else
@@ -7616,6 +7616,16 @@ function BankItems_AddTooltipData(self, ...)
 			end
 			
 			for a, _ in pairs(alts) do
+				-- reset to re-use
+				baginfos[1][2] = 0
+				baginfos[2][2] = 0
+				baginfos[3][2] = 0
+				baginfos[4][2] = 0
+				baginfos[5][2] = 0
+				baginfos[6][2] = 0
+				baginfos[7][2] = 0
+				baginfos[8][2] = 0
+			
 				local counttable1, counttable2, counttable3 
 				if BankItems_Cache[q[1]] then counttable1 = BankItems_Cache[q[1]][a] end
 				if BankItems_Cache[q[2]] then counttable2 = BankItems_Cache[q[2]][a] end
@@ -7856,9 +7866,16 @@ function BankItems_AddTooltipData(self, ...)
 				end
 			end
 		end
-		if characters > 1 then
-			tinsert(BankItems_TooltipCache[item], L["Total: %d"]:format(totalCount))
-		end
+		
+		-- reset to re-use
+		baginfos[1][2] = 0
+		baginfos[2][2] = 0
+		baginfos[3][2] = 0
+		baginfos[4][2] = 0
+		baginfos[5][2] = 0
+		baginfos[6][2] = 0
+		baginfos[7][2] = 0
+		baginfos[8][2] = 0
 		
 		-- ACCOUNT BANKS
 		if quality then
@@ -7927,16 +7944,18 @@ function BankItems_AddTooltipData(self, ...)
 				baginfos[8][2] = (baginfos[8][2] or 0) + (counttable3.reagentbank or 0)
 			end
 			
-			local text
+			local text 
 			local name = "Warband"
 			
-			text = format("[%s] %s ", name, L["has"])
+			if counttable1 or counttable2 or counttable3 then text = format("[%s] %s ", name, L["has"]) end
 			if counttable1 then text = text..format("%d%s", counttable1.count, icon1) end
 			if counttable2 then text = text..format("%d%s", counttable2.count, icon2) end
 			if counttable3 then text = text..format("%d%s", counttable3.count, icon3) end
 
-			tinsert(BankItems_TooltipCache[item], text)
-			characters = characters + 1
+			if text then 
+				tinsert(BankItems_TooltipCache[item], text) 
+				characters = characters + 1
+			end
 
 		else
 			if BankItems_AccountCache[item] then

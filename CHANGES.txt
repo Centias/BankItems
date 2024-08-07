@@ -1,4 +1,10 @@
 ------------------------------------------------------------------------
+11.0.0.2 | Centias | 2024-08-06 20:31:15
+
+Update: Fix for Warband line when item is not in Warbank
+	Fix for duplicate Total lines
+	Fix for some tallying variables not being reset between characters for tooltips leading to inaccurate quantities
+------------------------------------------------------------------------
 11.0.0.1 | Centias | 2024-07-28 02:06:38
 
 Update: Fixes for TWW pre-patch and most of the work for getting Warband Storage working with existing functions

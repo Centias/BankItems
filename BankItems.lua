@@ -345,7 +345,7 @@ ACCOUNT_BANK = L["Warband bank"] --needed until Blizz adds the variable in globa
 --8.3 switched these ContainerFrame variables to local so replicate them here for reference
 --use a table to reduce number of local variables in main function
 local CFrame = {}
-CFrame.MAX_CONTAINER_ITEMS = 36;
+CFrame.MAX_CONTAINER_ITEMS = 38;
 CFrame.NUM_CONTAINER_COLUMNS = 4;
 CFrame.ROWS_IN_BG_TEXTURE = 6;
 CFrame.MAX_BG_TEXTURES = 2;
@@ -1171,9 +1171,14 @@ function BankItems_UpdateFrame_OnUpdate(self, elapsed)
 	if bagsToUpdate.elap then
 		bagsToUpdate.elap = bagsToUpdate.elap - elapsed
 	end
-	for i = 0, 12 do
+	for i = 0, 17 do
 		if bagsToUpdate[i] then
-			BankItems_SaveInvItems(i)
+			--Account Bank bagIDs are from 13 to 17
+			if i > 12 then
+				BankItems_SaveAccountBankItems()
+			else
+				BankItems_SaveInvItems(i)
+			end
 			bagsToUpdate[i] = nil
 		end
 	end
@@ -1216,6 +1221,7 @@ function BankItems_UpdateFrame_OnUpdate(self, elapsed)
 		end
 		bagsToUpdate.elap = nil
 		BankItems_Generate_SelfItemCache()
+		BankItems_Generate_AccountItemCache()
 		self:SetScript("OnUpdate", nil)
 	end
 end
@@ -8908,11 +8914,11 @@ function BankItems_SaveAccountBankItems()
 				selfAccount[i].VerNum = BANKITEMS_VERSION --track addon version for last account bank tab save
 				selfAccount[i].outOfDate = nil
 			--end
+			if BankItems_ABFrame:IsVisible() and BankItems_ABFrame.currentTab == i then
+				BankItems_PopulateAccountBank(BankItems_ABFrame.currentTab)
+			end
 		end
-
-		if BankItems_ABFrame:IsVisible() and BankItems_ABFrame.currentTab == i then
-			BankItems_PopulateAccountBank(BankItems_ABFrame.currentTab)
-		end
+		
 		selfAccount.TOC = TOC --track TOC version for last account bank save
 		selfAccount.VerNum = BANKITEMS_VERSION --track addon version for last account bank save
 	end
@@ -8998,7 +9004,7 @@ function BankItems_PopulateAccountBank(tab)
 						icon = icon or GetItemIcon(82800) --if peticon isn't returned set caged pet item texture
 					else
 						_, _, quality, _, _, _, _, _, _, icon = GetItemInfo(selfAccount[tab][i].link)
-						icon = icon or GetItemIconByID(selfGuild[tab][i].link)
+						icon = icon or GetItemIconByID(selfAccount[tab][i].link)
 						--if not icon then print(selfGuild[tab][i].link, GetItemInfo(selfGuild[tab][i].link)) end
 					end
 					if quality and (quality >= LE_ITEM_QUALITY_COMMON and BAG_ITEM_QUALITY_COLORS[quality]) then

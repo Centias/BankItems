@@ -1,42 +1,93 @@
 ------------------------------------------------------------------------
-11.0.0.2 | Centias | 2024-08-06 20:31:15
+v12.0.7.0 | 2026-07-11 | Modernized for Midnight (12.0.7)
 
-Update: Fix for Warband line when item is not in Warbank
-	Fix for duplicate Total lines
-	Fix for some tallying variables not being reset between characters for tooltips leading to inaccurate quantities
+TOC updated to Interface 120007; added IconTexture and addon category.
+Bank rework (11.2): the character bank is now scanned as tab containers
+  (bags 6-11) via C_Container/C_Bank. The old main-bank window slots, the
+  7th bank bag, the reagent bank and void storage were removed from the
+  game; their saved data remains viewable for characters that never
+  logged in after the rework, and is cleared for a character the first
+  time it opens the new bank.
+Item API moved to C_Item (GetItemInfo/GetItemCount/GetItemIconByID);
+  GetAddOnMetadata/IsAddOnLoaded moved to C_AddOns.
+All dropdowns rewritten from UIDropDownMenu (removed) to the modern Menu
+  API (DropdownButton/SetupMenu).
+Options panel registered through the Settings API instead of the removed
+  InterfaceOptions_AddCategory; checkboxes moved off the removed
+  InterfaceOptionsCheckButtonTemplate.
+Removed events (PLAYERREAGENTBANKSLOTS_CHANGED, REAGENTBANK_UPDATE,
+  VOID_*, etc.) are no longer registered; registrations of uncertain
+  events are guarded with C_EventUtils.IsEventValid.
+Removed the "Open BankItems bags with Blizzard bags" option; it relied
+  on replacing updateContainerFrameAnchors(), which no longer exists.
+Warband (account) bank tracking: the warband bank is recorded as its own
+  entry in the character dropdown (its five tabs, real containers 12-16,
+  are stored as Bag6-Bag10). It is scanned whenever the bank is open,
+  always passes realm/faction filters, and its gold and item counts are
+  included in the total-gold and item tooltips, search and export.
+Fixed: the Options button now opens the settings panel via the numeric
+  category ID (Settings.OpenToCategory ignores name strings).
+Fixed: selecting a character/guild in the data deletion dropdowns errored
+  because the Menu API passes extra callback arguments; the confirmation
+  popup is also raised above the Settings panel so it can't hide behind it.
+The void storage and reagent bank buttons, their options checkboxes and
+  the data broker tooltip shortcuts are now hidden unless a character
+  still has legacy data recorded for them.
+Fixed: clicking a bank tab (character or warband) did nothing -- the
+  classic bag windows only support 36 slots and errored on 98-slot tabs;
+  tabs now open in the shared 98-slot viewer frame (formerly the reagent
+  bank frame), one tab at a time like the game's own bank UI. The quick
+  search overlay code had the same 36-slot assumption and silently broke
+  the rest of the main window; fixed.
+Fixed: "data not found" chat/frame spam when selecting the warband entry
+  or when "/bi" auto-open behaviors included the removed reagent bank /
+  void storage; those are now skipped unless legacy data exists, and the
+  warband entry only auto-opens its bank tabs.
+Known gaps: the 28-slot main bank area of the window is only populated
+  for legacy data.
 ------------------------------------------------------------------------
-11.0.0.1 | Centias | 2024-07-28 02:06:38
+v12.0.7.1 | 2026-07-12 | Main window rebuilt around the 98-slot bank tabs
 
-Update: Fixes for TWW pre-patch and most of the work for getting Warband Storage working with existing functions
+The main window's old 28-slot legacy bank grid (only ever populated for
+  characters that never revisited the bank after the 11.2 rework) is
+  replaced by the modern 98-item tab-based bank storage, shown inline.
+The shared 98-slot tab viewer (formerly a separate popup window used for
+  bank tabs and the legacy reagent bank) is now embedded directly in the
+  main window instead of opening on its own.
+Added a vertical bank tab sidebar, modeled on the Guild Bank's own tab
+  list: click a tab (up to 6 for a character, 5 for the warband bank) to
+  switch the embedded viewer to it in place.
+The character bank tab icons that used to sit in the "bags" row below
+  the item grid are gone, replaced by the sidebar above. The remaining
+  bag icons (backpack, bags 1-5, equipped, mail, currency, auction
+  house, legacy reagent bank) stay as a compact row and still open their
+  own classic bag windows.
+Void Storage support (frame, buttons, save/populate functions, options
+  checkbox, data broker tooltip lines) is removed entirely -- the
+  feature no longer exists in the game as of 11.2. Legacy Bag104 data
+  saved by older versions of the addon is left in place but unused.
+Main window resized (403x430 -> 810x520) with a plain tiled background,
+  since the embedded tab viewer supplies its own Bank-style art.
 ------------------------------------------------------------------------
-10.0.3.3 | Centias | 2024-01-14 18:32:31
+r286 | Burstroc | 2021-02-12 10:56:56 +0000 (Fri, 12 Feb 2021) | 1 line
+Changed paths:
+   M /trunk/BankItems.lua
 
-Update: Updated GetItemIcon to work with 10.2.6 changes to C_Item namespace
+Update: Minor adjustment to default settings for new sorting options.
 ------------------------------------------------------------------------
-10.0.3.2 | Centias | 2024-01-14 23:57:46
+r285 | Burstroc | 2021-02-12 10:33:15 +0000 (Fri, 12 Feb 2021) | 9 lines
+Changed paths:
+   M /trunk/BankItems.lua
+   M /trunk/BankItems.toc
 
-Update: Added Resilient Leather and Howling Rune to problematic item IDs
+TOC updated for addon version 9.0.2.3
+Ticket #101: Fixed search result window being limited to contents of the first bag for currencies.
+Ticket #103: Added protections for tooltip hooks receiving nil item links.
+Updated: Added Dalaran Hearthstone to the ignore list for tooltip count display.
+Fixed: Added workaround for closing windows during combat.
+Updated: Added sorting to the money tooltip on the main BankItems frame. Added option to control the sorting for sorting order and limit the # of entries shown. Entry limit can be temporarily toggled on/off by clicking.
+Updated: Added options to control the sorting order of the LDB plugin tooltip and limit the # of entries shown. Entry limit can be temporarily overridden by holding down Alt.
+Updated: Adjusted options screen to make room for new options and make adding new options easier.
+Updated: Added new localization entries related to new options.
 ------------------------------------------------------------------------
-10.0.3.0 | Centias | 2023-12-01 01:36:33
 
-Update: Added option to run Mail Call on login
-	Fixed crafting window tooltips when the current character is missing rank/quality 1 of a reagent
-------------------------------------------------------------------------
-10.0.3.0 | Centias | 2023-11-27 18:41:00
-
-Update: Added Mail Call feature: use /bimc to see any mail that will expire in less than a week.
-	Fixed some bad item IDs for gems
-	Fixed missing "All Realms" checkbox not showing up in search window
-------------------------------------------------------------------------
-10.0.2.9 | Centias | 2023-04-28 00:11:31
-
-Update: Fixed initial save of bag 6 (first bank bag)
-------------------------------------------------------------------------
-10.0.2.8 | Centias | 2023-04-22 10:27:49
-
-Update: Fixed Draconium and Serevite Ore not showing all ranks in the tooltip because the item IDs are out of order.
-------------------------------------------------------------------------
-10.0.2.7 | Centias | 2023-01-26 18:55:43
-
-Update: Reworked tooltips for reagents with different qualities to include breakdowns and totals for all qualities.
-------------------------------------------------------------------------
